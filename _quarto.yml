@@ -1,0 +1,5 @@
+project:
+  title: "EDM-TSF2022"
+  render:
+    - "*.qmd"
+  output-dir: docs

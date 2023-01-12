@@ -1,0 +1,314 @@
+---
+title: Empirical Dynamic Modelling
+subtitle: Automatic Causal Inference and Forecasting
+institute: Time Series and Forecasting Symposium
+author: Dr Patrick Laub
+date: 2 December 2022
+date-format: long
+format:
+  revealjs:
+    html-math-method: katex
+    theme: [serif, custom.scss]
+    controls: true
+    controls-tutorial: true
+    logo: unsw-logo.svg
+    title-slide-attributes:
+      data-background-image: unsw-yellow-shape.png
+      data-background-size: contain !important
+    slide-number: c/t
+    strip-comments: true
+    margin: 0.2
+    chalkboard:
+      boardmarker-width: 5
+      grid: false
+    include-before: <div class="line right"></div>
+    footer: Patrick Laub, Time Series and Forecasting Symposium, University of Sydney
+highlight-style: breeze
+---
+
+<!--
+## Plan
+
+1. 🪄A magic trick🪄 (Taken's theorem)
+2. Stata package
+3. Automated analysis
+-->
+
+# Introduction {data-background-image="unsw-yellow-shape.png" data-visibility="uncounted"}
+
+## Goal: automatic causal inference
+
+<br>
+
+``` r
+df <- read.csv("chicago.csv")
+head(df)
+#>   Time Temperature Crime
+#> 1    1       24.08  1605
+#> 2    2       19.04  1119
+#> 3    3       28.04  1127
+#> 4    4       30.02  1154
+#> 5    5       35.96  1251
+#> 6    6       33.08  1276
+
+library(fastEDM)
+
+crimeCCMCausesTemp <- easy_edm("Crime", "Temperature", data=df)
+#> ✖ No evidence of CCM causation from Crime to Temperature found.
+
+tempCCMCausesCrime <- easy_edm("Temperature", "Crime", data=df)
+#> ✔ Some evidence of CCM causation from Temperature to Crime found.
+```
+
+## {.smaller}
+
+<div style="border: 0px dashed #555"><img src="stata-journal-paper-title.png" /></div>
+
+::: columns
+::: column
+Jinjing Li<br>
+University of Canberra
+
+George Sugihara<br>
+University of California San Diego
+:::
+::: column
+Michael J. Zyphur<br>
+University of Queensland
+
+Patrick J. Laub<br>
+UNSW
+:::
+:::
+
+<br>
+
+::: callout-note
+##  Acknowledgments
+
+Discovery Project DP200100219 and Future Fellowship FT140100629.
+:::
+
+## A different view of causality
+
+<br>
+
+Imagine $x_t$, $y_t$, $z_t$ are interesting time series...
+
+_If_ the data is generated according to the nonlinear system:
+
+$$
+\begin{aligned}
+  x_{t+1}  &= \sigma (y_t - x_t) \\
+  y_{t+1}  &= x_t (\rho - z_t) - y_t \\
+  z_{t+1}  &= x_t y_t - \beta z_t
+\end{aligned}
+$$
+
+then $y \Rightarrow x$, both $x, z \Rightarrow y$, and both $x, y \Rightarrow z$.
+
+
+## Linear/nonlinear dynamical systems {data-visibility="uncounted"}
+
+<br>
+
+Say $\mathbf{x}_t = (x_t, y_t, z_t)$, then if:
+
+::: columns
+::: column
+
+$$ \mathbf{x}_{t+1} = \mathbf{A} \mathbf{x}_{t} $$
+
+we have a linear system.
+
+:::
+::: column
+
+$$ \mathbf{x}_{t+1} = f(\mathbf{x}_{t}) $$
+
+we have a nonlinear system.
+
+:::
+:::
+
+> Using a term like nonlinear science is like referring to the bulk of zoology as the study of non-elephant animals. (Stanisław Ulam)
+
+::: footer
+We don't fit a model for $f$, non-parametrically use the data.
+Hence the name _empirical_ dynamic modelling. 
+:::
+
+## Noise or unobserved variables? {data-visibility="uncounted"}
+
+Takens' theorem to the rescue, though...
+
+> Takens' theorem is a deep mathematical result with far-reaching implications.
+> Unfortunately, to really understand it, it requires a background in topology.
+> (Munch et al. 2020)
+
+::: columns
+::: column
+![](takens-header.png)
+![](takens-contents.png)
+:::
+::: column
+![](takens-simplified.png)
+:::
+:::
+
+::: footer
+Source: Munch et al. (2020), Frequently asked questions about nonlinear dynamics and empirical dynamic modelling, ICES Journal of Marine Science.
+:::
+
+
+# Empirical Dynamic Modelling (EDM) {data-background-image="unsw-yellow-shape.png" data-visibility="uncounted"}
+
+## Create lagged embeddings
+
+<br>
+
+Given two time series, create $E$-length trajectories
+
+$$ \mathbf{x}_t = (\text{Temp}_t, \text{Temp}_{t-1}, \dots, \text{Temp}_{t-(E-1)}) \in \mathbb{R}^{E} $$
+
+and targets
+
+$$ y_t = \text{Crime}_{t} .$$
+
+::: {.callout-note}
+The $\mathbf{x}_t$'s are called _points_ (on the shadow manifold).
+:::
+
+<!-- 
+## Key idea {data-visibility="uncounted"}
+
+Use lags of the time series!
+
+Given $x_t$ time series, create $E$-length trajectories
+
+$$ \mathbf{x}_t = (x_t, x_{t-\tau}, x_{t-2\tau}, \dots, x_{t-(E-1)\tau}) \in \mathbb{R}^{E} , t=1,2,\dots$$
+
+and targets
+
+$$ y_t = (x_{t+p}) , t=1,2,\dots .$$
+
+Parametrised by $\tau, p \in \mathbb{N}$.
+
+-->
+
+## Split the data
+
+- $\mathcal{L} = \{ (\mathbf{x}_1, y_1) , \dots , (\mathbf{x}_{n} , y_{n}) \}$
+is _library set_,
+- $\mathcal{P} = \{ (\mathbf{x}_{n+1}, y_{n+1}) , \dots , (\mathbf{x}_{T}, y_{T}) \}$
+is _prediction set_.
+
+<br>
+
+For point $\mathbf{x}_{s} \in \mathcal{P}$, pretend we don't know $y_s$ and try to predict it.
+
+$$ \forall \, \mathbf{x} \in \mathcal{L} \quad \text{ find } \quad d(\mathbf{x}_{s}, \mathbf{x}) $$
+
+This is computationally demanding.
+
+## Non-parametric prediction: simplex
+
+<br>
+
+For point $\mathbf{x}_{s} \in \mathcal{P}$, find $k$ nearest neighbours in $\mathcal{L}$.
+
+Say, e.g., $k=2$ and the neighbours are 
+
+$$\mathcal{NN}_k = \bigl( (\mathbf{x}_{3}, y_3), (\mathbf{x}_{5}, y_5) \bigr)$$
+
+The _simplex method_ predicts
+
+$$\widehat{y}_s = w_1 y_3 + w_2 y_5 .$$ 
+
+## Non-parametric prediction: S-map
+
+<br>
+
+_Sequential Locally Weighted Global Linear Maps (S-map)_
+
+Weight the points by distance
+$$ w_i = \exp\bigl\{ - \theta d(\mathbf{x}_{s}, \mathbf{x}_i) \bigr\} .$$
+
+Build a local linear system
+$$\widehat{y}_s = \mathbf{x}_s^\top \boldsymbol{\beta}_s  .$$
+
+For all $s \in \mathcal{P}$, compare $\widehat{y}_s$ to true $y_s$, and calculate $\rho$.
+
+## Convergent cross mapping
+
+<br>
+
+- If $\text{Temp}_t$ causes $\text{Crime}_t$, then information about $\text{Temp}_t$ is somehow embedded in $\text{Crime}_t$.
+
+- By observing $\text{Crime}_t$, we should be able to forecast $\text{Temp}_t$.
+
+- By observing more of $\text{Crime}_t$ (more "training data"), our forecasts of $\text{Temp}_t$ should be more accurate.
+
+<br>
+
+_Example_: [Chicago crime and temperature](https://edm-developers.github.io/fastEDM-r/articles/chicago.html).
+
+<!--
+## Fish brains
+
+<iframe width="100%" height="600" src="https://www.youtube.com/embed/5HtXYKKRA8g?start=1311" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+-->
+
+# Software {data-background-image="unsw-yellow-shape.png" data-visibility="uncounted"}
+
+## Stata package
+
+<iframe src="https://edm-developers.github.io/edm-stata/" width="100%" height="600" style="border:none;"></iframe>
+
+## R package {.smaller}
+
+<br>
+
+Thanks to Rishi Dhushiyandan for his hard work on `easy_edm`.
+
+<br>
+
+<iframe src="https://edm-developers.github.io/fastEDM-r/" width="100%" height="480" style="border:none;"></iframe>
+
+::: footer
+:::
+
+## Python package
+
+<iframe src="https://edm-developers.github.io/fastEDM-python/" width="100%" height="600" style="border:none;"></iframe>
+
+## Modern engineering
+
+- Open code (9,745 LOC) on MIT License,
+- unit & integration tests (5,342 LOC),
+- documentation (5,042 LOC),
+- Git (1,198 commits),
+- Github Actions (11 tasks),
+- vectorised, microbenchmarking, ASAN, linting, 
+- all C++ compilers, WASM, all OSs.
+
+<!-- 
+
+wc -l edm-stata/src/*.h edm-stata/src/*.cpp edm-stata/src/main/benchmark.cpp edm-stata/src/main/cli_main.cpp edm-stata/src/main/stata.cpp edm-stata/stata/edm.ado fastEDM-r/R/* fastEDM-python/fastEDM/*.py
+
+wc -l edm-stata/src/main/test.cpp edm-stata/test/ci-test.do fastEDM-r/tests/testthat/* fastEDM-python/tests/*.py
+
+wc -l Stata\ Paper/sj-edm/edm.tex edm-stata/stata/edm.sthlp edm-stata/docs/*.md edm-stata/docs/examples/chicago.md edm-stata/docs/examples/logistic-map.md edm-stata/docs/assets/*js fastEDM-r/man/*.Rd fastEDM-r/man/chicago-easy-edm-example.R fastEDM-r/vignettes/chicago.Rmd fastEDM-python/docs/*.md fastEDM-python/docs/manifolds/manifolds.py
+
+git rev-list --all --count
+-->
+
+## Get involved!
+
+<br>
+
+😊 Give it a try, feedback would be very welcome.
+
+<br>
+
+😍 If you're talented in causal inference or programming (Stata/Mata, R, Javascript, C++, Python), we'd love contributions! 
