@@ -1,0 +1,5 @@
+fastEDM @ git+https://github.com/EDM-Developers/fastEDM-python
+numpy
+pandas
+matplotlib
+seaborn
