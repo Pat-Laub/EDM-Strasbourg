@@ -22,7 +22,7 @@ format:
       boardmarker-width: 5
       grid: false
     include-before: <div class="line right"></div>
-    footer: Patrick Laub, Stochastic Calculus Seminar, Université de Strasbourg
+    # footer: Patrick Laub, Stochastic Calculus Seminar, Université de Strasbourg
 highlight-style: breeze
 jupyter: python3
 execute:
@@ -38,6 +38,29 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from bs4 import BeautifulSoup
 from IPython.display import display, HTML
+
+import matplotlib
+
+import cycler
+colors = ["#91CCCC", "#FF8FA9", "#CC91BC", "#3F9999", "#A5FFB8"]
+plt.rcParams["axes.prop_cycle"] = cycler.cycler(color=colors)
+
+def set_square_figures():
+  plt.rcParams['figure.figsize'] = (2.0, 2.0)
+
+def set_rectangular_figures():
+  plt.rcParams['figure.figsize'] = (5.0, 2.0)
+
+set_rectangular_figures()
+
+plt.rcParams['figure.dpi'] = 350
+plt.rcParams['savefig.bbox'] = "tight"
+plt.rcParams['font.family'] = "serif"
+
+plt.rcParams['axes.spines.right'] = False
+plt.rcParams['axes.spines.top'] = False
+
+np.set_printoptions(precision=2)
 
 def trim_html_table(html_string, start=None, end=2):
   soup = BeautifulSoup(html_string, 'html.parser')
@@ -310,15 +333,9 @@ _Example_: [Chicago crime and temperature](https://edm-developers.github.io/fast
 <iframe width="100%" height="600" src="https://www.youtube.com/embed/5HtXYKKRA8g?start=1311" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 -->
 
-# EDM Algorithms {data-background-image="unsw-yellow-shape.png" data-visibility="uncounted"}
+# Simplex Algorithm {data-background-image="unsw-yellow-shape.png" data-visibility="uncounted"}
 
 ## Toy problem
-
-
-$$
-x_t = a x_{t-1} + b x_{t-2} \leftrightarrow x_t = \sin(2 \pi f t)
-$$
-
 
 ```{python}
 #| echo: false
@@ -337,29 +354,53 @@ x[1] = 1.0
 for i in range(2, N):
     x[i] = a * x[i-1] + b * x[i-2] + rnd.normal(0, 0.1)
 
-x = x.round(4)
+x = x.round(2)
 ```
+
+::: columns
+::: {.column width=75%}
+
+$$
+% x_t = a x_{t-1} + b x_{t-2} \leftrightarrow x_t = \sin(2 \pi f t)
+$$
+
 
 ```{python}
 #| echo: false
+plt.rcParams['figure.figsize'] = (5.0, 3.0)
+ 
 # Plot the x vector, adding dots for each point and connecting them with lines
-plt.plot(t, x, 'o', color="blue")
-plt.plot(t, x, '--', color="blue", alpha=0.5)
+plt.plot(t, x, 'o', color=colors[0])
+plt.plot(t, x, '--', color=colors[0], alpha=0.5)
 plt.xlabel("t")
 plt.ylabel("x");
+
+set_rectangular_figures()
 ```
 
-## Start with time series
-
-::: columns
-::: {.column width=40%}
+:::
+::: {.column width=25%}
 
 ```{python}
 #| echo: false
 df = pd.DataFrame({"x": x})
 df.columns.name = "t"
+df
+```
 
-display(df)
+:::
+:::
+
+<!-- ## Start with time series -->
+
+::: columns
+::: {.column width=40%}
+
+```{python}
+#| echo: false
+# df = pd.DataFrame({"x": x})
+# df.columns.name = "t"
+# df
 ```
 
 :::
@@ -367,35 +408,21 @@ display(df)
 
 ```{python}
 #| echo: false
-target = df.copy()
-target.columns = ["y"]
-target.columns.name = "t"
-target["y"] = target["y"].shift(-1) 
-display(target)
+# target = df.copy()
+# target.columns.name = "t"
+# target.columns = ["next"]
+# target["next"] = target["next"].shift(-1) 
+# target
 ```
 
-
 :::
 :::
-
 
 ## Create the embeddings
 
-::: columns
-::: {.column width=30%}
 
 ```{python}
 #| echo: false
-display(df)
-```
-
-:::
-::: {.column width=70%} 
-
-
-```{python}
-#| echo: false
-
 import fastEDM
 
 # Create the embeddings
@@ -403,19 +430,306 @@ E = 3
 tau = 1
 p = 1
 
-mani = fastEDM.create_manifold(list(t), list(x), E=E, tau=tau, p=p)
+mani, targets = fastEDM.create_manifold_and_targets(list(t), list(x), E=E, tau=tau, p=p)
+
 mani = mani[:, ::-1]  # reverse the order of the columns
+targets = targets.round(2)
 
 mani_df = pd.DataFrame(mani)
+targets_df = pd.DataFrame(targets)
+targets_df.columns = ["target"]
+```
 
-display(mani_df)
+::: columns
+::: {.column width=25%}
+
+```{python}
+#| echo: false
+display(df)
+```
+
+:::
+::: {.column width=50%} 
+
+```{python}
+#| echo: false
+display(mani_df) 
+```
+
+:::
+::: {.column width=25%} 
+
+```{python}
+#| echo: false
+display(targets_df) 
 ```
 
 :::
 :::
 
-## Create a mini-dataset based on neighbours
+## Making a prediction
 
+```{python}
+#| echo: false
+point = mani_df.iloc[-1, :].values
+target = targets_df.iloc[-1, :].values 
+
+point = [0.57, 0.42, 0.11]
+target = -0.25
+```
+
+::: columns
+::: {.column width=50%}
+
+```{python}
+#| echo: false
+point
+```
+
+:::
+::: {.column width=50%}
+
+```{python}
+#| echo: false
+# target
+``` 
+
+:::
+:::
+
+```{python}
+#| echo: false
+plt.plot(point, 'o', color=colors[0])
+plt.plot(point, '--', color=colors[0], alpha=0.5)
+
+plt.axvline(len(point), color=colors[1], ls="--")
+None
+```
+
+## Look at the manifold
+
+```{python}
+#| echo: false
+for i in range(mani.shape[0]-1): 
+  point_i = mani_df.iloc[i, :].values
+  target_i = targets_df.iloc[i, 0] 
+  plt.plot(point_i, 'o-')
+  
+  # Plot another line from point_i[-1] to target_i using the same colour as the previous line
+  prev_col = plt.gca().lines[-1].get_color()
+  
+  xs = [len(point_i)-1, len(point_i)]
+  ys = [point_i[-1], target_i]
+
+  plt.plot(xs, ys, '--', color=prev_col, alpha=0.5)
+
+plt.axvline(len(point), ls="--", color=colors[1])
+None
+```
+
+## Calculate the distances to the point
+
+```{python}
+#| echo: false
+# point
+``` 
+
+```{python}
+#| echo: false
+
+# Calculate the distances to the poi nt
+distances = np.linalg.norm(mani - point, axis=1)
+distances = distances.round(2)
+distances_df = pd.DataFrame({"dist": distances})
+# distances_df
+``` 
+
+::: columns
+::: {.column width=50%} 
+
+```{python}
+#| echo: false
+display(mani_df) 
+```
+
+:::
+::: {.column width=25%} 
+
+```{python}
+#| echo: false
+display(targets_df) 
+```
+
+:::
+::: {.column width=25%}
+
+```{python}
+#| echo: false
+display(distances_df)
+```
+
+:::
+:::
+
+
+## Find the nearest neighbours
+
+```{python}
+#| echo: false
+# Sort the manifold, targets and distances by distance 
+order = np.argsort(distances)
+mani_sorted = mani_df.iloc[order]
+targets_sorted = targets_df.iloc[order]
+distances_sorted = distances_df.iloc[order]
+```
+
+::: columns
+::: {.column width=50%} 
+
+```{python}
+#| echo: false
+display(mani_sorted) 
+```
+
+:::
+::: {.column width=25%} 
+
+```{python}
+#| echo: false
+display(targets_sorted) 
+```
+
+:::
+::: {.column width=25%}
+
+```{python}
+#| echo: false
+display(distances_sorted)
+```
+
+:::
+:::
+
+## Find the nearest neighbours
+
+
+```{python}
+#| echo: false
+# Sort the manifold, targets and distances by distance 
+k = len(point) + 1
+mani_sorted = mani_sorted.head(k)
+targets_sorted = targets_sorted.head(k)
+distances_sorted = distances_sorted.head(k)
+```
+
+
+::: columns
+::: {.column width=50%} 
+
+```{python}
+#| echo: false
+display(mani_sorted) 
+```
+
+:::
+::: {.column width=25%} 
+
+```{python}
+#| echo: false
+display(targets_sorted) 
+```
+
+:::
+::: {.column width=25%}
+
+```{python}
+#| echo: false
+display(distances_sorted)
+```
+
+:::
+:::
+
+## Plot those trajectories
+
+```{python}
+#| echo: false
+for i in range(mani_sorted.shape[0]): 
+  point_i = mani_sorted.iloc[i, :].values
+  target_i = targets_sorted.iloc[i, 0] 
+  plt.plot(point_i, 'o-')
+  
+  # Plot another line from point_i[-1] to target_i using the same colour as the previous line
+  prev_col = plt.gca().lines[-1].get_color()
+  
+  xs = [len(point_i)-1, len(point_i)]
+  ys = [point_i[-1], target_i]
+
+  plt.plot(xs, ys, '--', color=prev_col, alpha=0.5)
+
+plt.axvline(len(point), ls="--", color=colors[1])
+None
+```
+
+## Make a prediction
+
+```{python}
+#| echo: false
+theta = 1.0
+weights = np.exp(-theta * distances_sorted / distances_sorted.iloc[0, 0])
+weights = weights / weights.sum()
+weights = weights.round(2)
+weights.columns = ["weights"]
+```
+
+::: columns
+
+::: {.column width=33%} 
+
+```{python}
+#| echo: false
+display(targets_sorted) 
+```
+
+:::
+::: {.column width=33%}
+
+```{python}
+#| echo: false
+display(distances_sorted)
+```
+
+:::
+::: {.column width=33%} 
+
+```{python}
+#| echo: false
+display(weights) 
+```
+
+:::
+:::
+
+## Plot those trajectories (weighted)
+
+```{python}
+#| echo: false
+for i in range(mani_sorted.shape[0]): 
+  point_i = mani_sorted.iloc[i, :].values
+  target_i = targets_sorted.iloc[i, 0] 
+  plt.plot(point_i, 'o-', alpha=weights.iloc[i, 0])
+  
+  # Plot another line from point_i[-1] to target_i using the same colour as the previous line
+  prev_col = plt.gca().lines[-1].get_color()
+  
+  xs = [len(point_i)-1, len(point_i)]
+  ys = [point_i[-1], target_i]
+
+  plt.plot(xs, ys, '--', color=prev_col, alpha=0.75 * weights.iloc[i, 0])
+
+plt.axvline(len(point), ls="--", color=colors[1])
+None
+```
 
 
 # Software {data-background-image="unsw-yellow-shape.png" data-visibility="uncounted"}
