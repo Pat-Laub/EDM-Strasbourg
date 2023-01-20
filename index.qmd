@@ -1,7 +1,7 @@
 ---
 title: Empirical Dynamic Modelling
 subtitle: Automatic Causal Inference and Forecasting
-institute: Time Series and Forecasting Symposium
+institute: UNSW Sydney, School of Risk and Actuarial Studies
 author: Dr Patrick Laub
 date: 2 December 2022
 date-format: long
@@ -22,9 +22,60 @@ format:
       boardmarker-width: 5
       grid: false
     include-before: <div class="line right"></div>
-    footer: Patrick Laub, Time Series and Forecasting Symposium, University of Sydney
+    footer: Patrick Laub, Stochastic Calculus Seminar, Université de Strasbourg
 highlight-style: breeze
+jupyter: python3
+execute:
+  keep-ipynb: true
+  echo: true
 ---
+
+```{python}
+#| echo: false
+import numpy as np
+import numpy.random as rnd
+import matplotlib.pyplot as plt
+import pandas as pd
+from bs4 import BeautifulSoup
+from IPython.display import display, HTML
+
+def trim_html_table(html_string, start=None, end=2):
+  soup = BeautifulSoup(html_string, 'html.parser')
+
+  # find the row containing "..."
+  dots_row = soup.find("td", string="...")
+
+  if dots_row is None:
+    return html_string
+
+  target_row = soup.find("td", string="...").parent
+
+  if start:
+    # remove all rows after the target row
+    for row in list(reversed(target_row.find_previous_siblings("tr")))[start:]:
+        row.decompose()
+
+  if end:
+    # remove all rows after the target row
+    for row in target_row.find_next_siblings("tr")[:-end]:
+        row.decompose()
+
+  # the modified html string
+  modified_html = str(soup)
+
+  return modified_html
+
+
+def wrapped_html_repr(fn):
+    def wrapped(*args, **kwargs):
+        x = fn(*args, **kwargs)
+        return trim_html_table(x, end=2)
+    return wrapped
+
+pd.DataFrame._repr_html_ = wrapped_html_repr(pd.DataFrame._repr_html_)
+
+
+```
 
 <!--
 ## Plan
@@ -258,6 +309,114 @@ _Example_: [Chicago crime and temperature](https://edm-developers.github.io/fast
 
 <iframe width="100%" height="600" src="https://www.youtube.com/embed/5HtXYKKRA8g?start=1311" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 -->
+
+# EDM Algorithms {data-background-image="unsw-yellow-shape.png" data-visibility="uncounted"}
+
+## Toy problem
+
+
+$$
+x_t = a x_{t-1} + b x_{t-2} \leftrightarrow x_t = \sin(2 \pi f t)
+$$
+
+
+```{python}
+#| echo: false
+rnd.seed(42)
+
+f = 0.137
+
+a = 2 * np.cos(2*np.pi*f)
+b = -1
+
+N = 100
+t = np.arange(N).astype(float)
+x = np.zeros(N)
+x[1] = 1.0
+
+for i in range(2, N):
+    x[i] = a * x[i-1] + b * x[i-2] + rnd.normal(0, 0.1)
+
+x = x.round(4)
+```
+
+```{python}
+#| echo: false
+# Plot the x vector, adding dots for each point and connecting them with lines
+plt.plot(t, x, 'o', color="blue")
+plt.plot(t, x, '--', color="blue", alpha=0.5)
+plt.xlabel("t")
+plt.ylabel("x");
+```
+
+## Start with time series
+
+::: columns
+::: {.column width=40%}
+
+```{python}
+#| echo: false
+df = pd.DataFrame({"x": x})
+df.columns.name = "t"
+
+display(df)
+```
+
+:::
+::: {.column width=40%}
+
+```{python}
+#| echo: false
+target = df.copy()
+target.columns = ["y"]
+target.columns.name = "t"
+target["y"] = target["y"].shift(-1) 
+display(target)
+```
+
+
+:::
+:::
+
+
+## Create the embeddings
+
+::: columns
+::: {.column width=30%}
+
+```{python}
+#| echo: false
+display(df)
+```
+
+:::
+::: {.column width=70%} 
+
+
+```{python}
+#| echo: false
+
+import fastEDM
+
+# Create the embeddings
+E = 3
+tau = 1
+p = 1
+
+mani = fastEDM.create_manifold(list(t), list(x), E=E, tau=tau, p=p)
+mani = mani[:, ::-1]  # reverse the order of the columns
+
+mani_df = pd.DataFrame(mani)
+
+display(mani_df)
+```
+
+:::
+:::
+
+## Create a mini-dataset based on neighbours
+
+
 
 # Software {data-background-image="unsw-yellow-shape.png" data-visibility="uncounted"}
 

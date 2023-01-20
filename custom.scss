@@ -95,3 +95,28 @@ pre.numberSource code > span > a:first-child::before {
 .reveal.has-dark-background .line {
     display: none;
 }
+
+// Remove the default lines between every row
+.reveal table th,.reveal table td {
+    border-bottom: 0px !important;
+}
+
+// Put a horizontal line under the table headers
+.reveal table thead {
+    border-bottom: 1px solid !important;
+}
+
+// Put a vertical line after the first column
+.reveal table th:first-child, .reveal table td:first-child {
+    border-right: 1px solid !important;
+}
+
+// Center the table headers
+.reveal thead tr th {
+    text-align: center !important;
+}
+
+// Center the table cells
+.reveal table th, .reveal table td {
+    text-align: center !important;
+}
