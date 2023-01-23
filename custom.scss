@@ -103,12 +103,12 @@ pre.numberSource code > span > a:first-child::before {
 
 // Put a horizontal line under the table headers
 .reveal table thead {
-    border-bottom: 1px solid !important;
+    border-bottom: 2px solid !important;
 }
 
 // Put a vertical line after the first column
 .reveal table th:first-child, .reveal table td:first-child {
-    border-right: 1px solid !important;
+    border-right: 2px solid !important;
 }
 
 // Center the table headers

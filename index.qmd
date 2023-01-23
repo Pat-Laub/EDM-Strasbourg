@@ -3,7 +3,7 @@ title: Empirical Dynamic Modelling
 subtitle: Automatic Causal Inference and Forecasting
 institute: UNSW Sydney, School of Risk and Actuarial Studies
 author: Dr Patrick Laub
-date: 2 December 2022
+date: 7 February 2023
 date-format: long
 format:
   revealjs:
@@ -430,10 +430,9 @@ E = 3
 tau = 1
 p = 1
 
-mani, targets = fastEDM.create_manifold_and_targets(list(t), list(x), E=E, tau=tau, p=p)
+mani, targets = fastEDM.create_manifold_and_targets(t, x, E=E, tau=tau, p=p)
 
 mani = mani[:, ::-1]  # reverse the order of the columns
-targets = targets.round(2)
 
 mani_df = pd.DataFrame(mani)
 targets_df = pd.DataFrame(targets)
