@@ -7,7 +7,6 @@ date: 7 February 2023
 date-format: long
 format:
   revealjs:
-    html-math-method: katex
     theme: [serif, custom.scss]
     controls: true
     controls-tutorial: true
@@ -96,8 +95,6 @@ def wrapped_html_repr(fn):
     return wrapped
 
 pd.DataFrame._repr_html_ = wrapped_html_repr(pd.DataFrame._repr_html_)
-
-
 ```
 
 <!--
@@ -360,10 +357,13 @@ x = x.round(2)
 ::: columns
 ::: {.column width=75%}
 
+<!-- 
 $$
-% x_t = a x_{t-1} + b x_{t-2} \leftrightarrow x_t = \sin(2 \pi f t)
+x_t = a x_{t-1} + b x_{t-2} \leftrightarrow x_t = \sin(2 \pi f t)
 $$
+-->
 
+<br>
 
 ```{python}
 #| echo: false
@@ -372,8 +372,8 @@ plt.rcParams['figure.figsize'] = (5.0, 3.0)
 # Plot the x vector, adding dots for each point and connecting them with lines
 plt.plot(t, x, 'o', color=colors[0])
 plt.plot(t, x, '--', color=colors[0], alpha=0.5)
-plt.xlabel("t")
-plt.ylabel("x");
+plt.xlabel("$t$")
+plt.ylabel("$x$");
 
 set_rectangular_figures()
 ```
@@ -383,8 +383,8 @@ set_rectangular_figures()
 
 ```{python}
 #| echo: false
-df = pd.DataFrame({"x": x})
-df.columns.name = "t"
+df = pd.DataFrame({"\(x_t\)": x})
+df.columns.name = "\(t\)"
 df
 ```
 
@@ -420,23 +420,24 @@ df
 
 ## Create the embeddings
 
-
 ```{python}
 #| echo: false
 import fastEDM
 
 # Create the embeddings
 E = 3
-tau = 1
 p = 1
+M, y = fastEDM.create_manifold_and_targets(t, x, E=E, tau=1, p=p)
 
-mani, targets = fastEDM.create_manifold_and_targets(t, x, E=E, tau=tau, p=p)
+# M = M[:, ::-1]  # reverse the order of the columns
 
-mani = mani[:, ::-1]  # reverse the order of the columns
+manifold = pd.DataFrame(M)
+manifold.columns = ["\(x_t\)"] + ["\(x_{{t-{}}}\)".format(i) for i in range(1, E)]
+manifold.columns.name = "\(i\)"
 
-mani_df = pd.DataFrame(mani)
-targets_df = pd.DataFrame(targets)
-targets_df.columns = ["target"]
+targets = pd.DataFrame(y)
+targets.columns = ["\(x_{t+1}\)"]
+targets.columns.name = "\(i\)"
 ```
 
 ::: columns
@@ -452,7 +453,7 @@ display(df)
 
 ```{python}
 #| echo: false
-display(mani_df) 
+display(manifold) 
 ```
 
 :::
@@ -460,7 +461,7 @@ display(mani_df)
 
 ```{python}
 #| echo: false
-display(targets_df) 
+display(targets) 
 ```
 
 :::
@@ -470,31 +471,17 @@ display(targets_df)
 
 ```{python}
 #| echo: false
-point = mani_df.iloc[-1, :].values
-target = targets_df.iloc[-1, :].values 
+point = manifold.iloc[-1, :].values
+target = targets.iloc[-1, :].values 
 
 point = [0.57, 0.42, 0.11]
 target = -0.25
 ```
 
-::: columns
-::: {.column width=50%}
-
 ```{python}
 #| echo: false
-point
+HTML(f"\[ \\boldsymbol{{x}}^* = \\bigl({', '.join(map(str, reversed(point)))} \\bigr) \]")
 ```
-
-:::
-::: {.column width=50%}
-
-```{python}
-#| echo: false
-# target
-``` 
-
-:::
-:::
 
 ```{python}
 #| echo: false
@@ -502,6 +489,13 @@ plt.plot(point, 'o', color=colors[0])
 plt.plot(point, '--', color=colors[0], alpha=0.5)
 
 plt.axvline(len(point), color=colors[1], ls="--")
+
+# ticks = ["$x_{{t{}}}$".format(i) for i in range(-(E-1), 0)] + ["$x_t$", f"$x_{{t+{p}}}$"]
+ticks = ["$t{}$".format(i) for i in range(-(E-1), 0)] + ["$t$", f"$t+{p}$"]
+
+# Set the x tick labels to be the `ticks` variable
+plt.xticks(range(len(ticks)), ticks)
+plt.ylabel("$x$")
 None
 ```
 
@@ -509,9 +503,9 @@ None
 
 ```{python}
 #| echo: false
-for i in range(mani.shape[0]-1): 
-  point_i = mani_df.iloc[i, :].values
-  target_i = targets_df.iloc[i, 0] 
+for i in range(manifold.shape[0]-1): 
+  point_i = manifold.iloc[i, :].values
+  target_i = targets.iloc[i, 0] 
   plt.plot(point_i, 'o-')
   
   # Plot another line from point_i[-1] to target_i using the same colour as the previous line
@@ -523,6 +517,8 @@ for i in range(mani.shape[0]-1):
   plt.plot(xs, ys, '--', color=prev_col, alpha=0.5)
 
 plt.axvline(len(point), ls="--", color=colors[1])
+plt.xticks(range(len(ticks)), ticks)
+plt.ylabel("$x$")
 None
 ```
 
@@ -535,20 +531,19 @@ None
 
 ```{python}
 #| echo: false
-
-# Calculate the distances to the poi nt
-distances = np.linalg.norm(mani - point, axis=1)
+# Calculate the distances to the point
+distances = np.linalg.norm(manifold - point, axis=1)
 distances = distances.round(2)
-distances_df = pd.DataFrame({"dist": distances})
-# distances_df
+distances = pd.DataFrame({"\(d(\mathbf{x}_i, \mathbf{x}^*)\)": distances})
+distances.columns.name = "\(i\)"
 ``` 
 
 ::: columns
-::: {.column width=50%} 
+::: {.column width=45%} 
 
 ```{python}
 #| echo: false
-display(mani_df) 
+display(manifold) 
 ```
 
 :::
@@ -556,15 +551,15 @@ display(mani_df)
 
 ```{python}
 #| echo: false
-display(targets_df) 
+display(targets) 
 ```
 
 :::
-::: {.column width=25%}
+::: {.column width=30%}
 
 ```{python}
 #| echo: false
-display(distances_df)
+display(distances)
 ```
 
 :::
@@ -576,14 +571,14 @@ display(distances_df)
 ```{python}
 #| echo: false
 # Sort the manifold, targets and distances by distance 
-order = np.argsort(distances)
-mani_sorted = mani_df.iloc[order]
-targets_sorted = targets_df.iloc[order]
-distances_sorted = distances_df.iloc[order]
+order = np.argsort(distances.to_numpy().flatten())
+mani_sorted = manifold.iloc[order,:]
+targets_sorted = targets.iloc[order]
+distances_sorted = distances.iloc[order]
 ```
 
 ::: columns
-::: {.column width=50%} 
+::: {.column width=45%} 
 
 ```{python}
 #| echo: false
@@ -599,7 +594,7 @@ display(targets_sorted)
 ```
 
 :::
-::: {.column width=25%}
+::: {.column width=30%}
 
 ```{python}
 #| echo: false
@@ -616,18 +611,18 @@ display(distances_sorted)
 #| echo: false
 # Sort the manifold, targets and distances by distance 
 k = len(point) + 1
-mani_sorted = mani_sorted.head(k)
-targets_sorted = targets_sorted.head(k)
-distances_sorted = distances_sorted.head(k)
+mani_knn = mani_sorted.head(k)
+targets_knn = targets_sorted.head(k)
+distances_knn = distances_sorted.head(k)
 ```
 
 
 ::: columns
-::: {.column width=50%} 
+::: {.column width=45%} 
 
 ```{python}
 #| echo: false
-display(mani_sorted) 
+display(mani_knn) 
 ```
 
 :::
@@ -635,15 +630,15 @@ display(mani_sorted)
 
 ```{python}
 #| echo: false
-display(targets_sorted) 
+display(targets_knn) 
 ```
 
 :::
-::: {.column width=25%}
+::: {.column width=30%}
 
 ```{python}
 #| echo: false
-display(distances_sorted)
+display(distances_knn)
 ```
 
 :::
@@ -653,9 +648,9 @@ display(distances_sorted)
 
 ```{python}
 #| echo: false
-for i in range(mani_sorted.shape[0]): 
-  point_i = mani_sorted.iloc[i, :].values
-  target_i = targets_sorted.iloc[i, 0] 
+for i in range(mani_knn.shape[0]): 
+  point_i = mani_knn.iloc[i, :].values
+  target_i = targets_knn.iloc[i, 0] 
   plt.plot(point_i, 'o-')
   
   # Plot another line from point_i[-1] to target_i using the same colour as the previous line
@@ -667,6 +662,8 @@ for i in range(mani_sorted.shape[0]):
   plt.plot(xs, ys, '--', color=prev_col, alpha=0.5)
 
 plt.axvline(len(point), ls="--", color=colors[1])
+plt.xticks(range(len(ticks)), ticks)
+plt.ylabel("$x$")
 None
 ```
 
@@ -674,11 +671,12 @@ None
 
 ```{python}
 #| echo: false
-theta = 1.0
-weights = np.exp(-theta * distances_sorted / distances_sorted.iloc[0, 0])
-weights = weights / weights.sum()
-weights = weights.round(2)
-weights.columns = ["weights"]
+theta = 1
+weights_knn = np.exp(-theta * distances_knn / distances_knn.iloc[0, 0])
+weights_knn = weights_knn / weights_knn.sum()
+weights_knn = weights_knn.round(2)
+weights_knn.columns = ["\(w_i\)"]
+weights_knn.columns.name = "\(i\)"
 ```
 
 ::: columns
@@ -687,7 +685,7 @@ weights.columns = ["weights"]
 
 ```{python}
 #| echo: false
-display(targets_sorted) 
+display(targets_knn) 
 ```
 
 :::
@@ -695,7 +693,7 @@ display(targets_sorted)
 
 ```{python}
 #| echo: false
-display(distances_sorted)
+display(distances_knn)
 ```
 
 :::
@@ -703,7 +701,7 @@ display(distances_sorted)
 
 ```{python}
 #| echo: false
-display(weights) 
+display(weights_knn) 
 ```
 
 :::
@@ -713,10 +711,11 @@ display(weights)
 
 ```{python}
 #| echo: false
-for i in range(mani_sorted.shape[0]): 
-  point_i = mani_sorted.iloc[i, :].values
-  target_i = targets_sorted.iloc[i, 0] 
-  plt.plot(point_i, 'o-', alpha=weights.iloc[i, 0])
+for i in range(mani_knn.shape[0]): 
+  point_i = mani_knn.iloc[i, :].values
+  target_i = targets_knn.iloc[i, 0]
+  weight_i = weights_knn.iloc[i, 0]
+  plt.plot(point_i, 'o-', alpha=weight_i)
   
   # Plot another line from point_i[-1] to target_i using the same colour as the previous line
   prev_col = plt.gca().lines[-1].get_color()
@@ -724,9 +723,13 @@ for i in range(mani_sorted.shape[0]):
   xs = [len(point_i)-1, len(point_i)]
   ys = [point_i[-1], target_i]
 
-  plt.plot(xs, ys, '--', color=prev_col, alpha=0.75 * weights.iloc[i, 0])
+  plt.plot(xs, ys, '--', color=prev_col, alpha=0.75 * weight_i)
 
 plt.axvline(len(point), ls="--", color=colors[1])
+plt.xticks(range(len(ticks)), ticks)
+plt.ylabel("$x$")
+None
+```
 None
 ```
 
