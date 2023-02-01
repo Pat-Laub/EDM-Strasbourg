@@ -120,15 +120,94 @@ def display_vector(x, start=None, end=2):
     display(HTML(table))
 ```
 
-<!--
+# 
+
+<h2>About me</h2>
+
+::: columns
+::: {.column width="65%"}
+
+<br>
+
+- Software engineer & maths (UQ)
+- PhD in probability (Aarhus)
+- Post-doc (ISFA Lyon)
+- RSE (Uni Melbourne)
+- Lecturer (UNSW)
+
+:::
+::: {.column width="35%"}
+
+![](hawkes-book-cover.jpeg)
+
+:::
+:::
+
+::: footer
+Cf. [https://pat-laub.github.io](https://pat-laub.github.io).
+:::
+
 ## Plan
 
-1. 🪄A magic trick🪄 (Taken's theorem)
-2. Stata package
-3. Automated analysis
--->
+1. Brief game about ABC
+2. 🪄Empirical Dynamic Modelling🪄
+3. Better performance in statistical computing
 
-# Introduction {data-background-image="unsw-yellow-shape.png" data-visibility="uncounted"}
+# ABC {data-visibility="uncounted" background-image="unsw-yellow-shape.png"}
+
+![Our IME paper](abc-abstract.png)
+
+## What is the bias?
+
+We flip a coin three times and get:
+
+::: columns
+::: {.column width="33%"}
+
+![**Heads**](aud-heads.jpeg)
+
+:::
+::: {.column width="33%"}
+
+![**Tails**](aud-tails.jpeg)
+:::
+::: {.column width="33%"}
+
+![**Heads**](aud-heads.jpeg)
+
+:::
+:::
+
+What is $\theta = \mathbb{P}(\text{Heads})$?
+
+## Bayesian approach
+
+::: columns
+::: column
+![Prior](coin-prior.png)
+:::
+::: column
+
+<iframe width="560" height="280" src="https://www.youtube.com/embed/P6pugawb7SM" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
+<iframe width="560" height="280" src="https://www.youtube.com/embed/tuXXubOkFuY" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
+:::
+:::
+
+## Let's flip coins
+
+<center>
+
+<img src="qr-code.png" height="400px"/>
+
+[https://pat-laub.github.io/abc-party/game](https://pat-laub.github.io/abc-party/game)
+
+</center>
+
+{{< include _coin-flip-animations.qmd >}}
+
+# Causal Inference Introduction {data-background-image="unsw-yellow-shape.png" data-visibility="uncounted"}
 
 ## Goal: automatic causal inference
 
@@ -1215,12 +1294,12 @@ Down from 89 ms to 5.5 ms (another 16x speedup)
 
 ## Benefits of vectorised code
             
-- Readability; more concise, expressing high-level ideas
+- Readability; more concise, expressing high-level ideas, e.g.
+$$ \sum_{n=0}^{\infty} \frac{f^{(n)}(a)}{n!} (x-a)^n $$
 - Replace slow interpreted loops with fast compiled code
 - Potentially can use a CPU's vectorised instructions (SIMD)
 - Better use of the CPU's cache
     
-$$ \sum_{n=0}^{\infty} \frac{f^{(n)}(a)}{n!} (x-a)^n $$
 
 ##
 
@@ -1414,13 +1493,14 @@ C++
 
 ##
 
-```python
-def arraySum(arr):
-  sum = 0;
-  for i in range(len(arr)):
-    sum += arr[i];
-
-  return sum
+```R
+function arraySum(arr) {
+  sum = 0
+  for (i in 1:length(arr)) {
+    sum += arr[i]
+  }
+  return(sum)
+}
 ```
 
 <img style="left: -180px; top: 0px; width: 802px; height: 518px;" data-natural-width="2090" data-natural-height="1350" data-crop-x="0.224439" data-crop-y="0" data-crop-width="0.775561" data-crop-height="1" data-lazy-loaded="" data-src="https://s3.amazonaws.com/media-p.slid.es/uploads/782452/images/8159836/lin-clark-type-checking.png">
