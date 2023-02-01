@@ -35,6 +35,7 @@ import numpy as np
 import numpy.random as rnd
 import matplotlib.pyplot as plt
 import pandas as pd
+from scipy import stats
 from bs4 import BeautifulSoup
 from IPython.display import display, HTML
 
@@ -61,7 +62,9 @@ plt.rcParams['axes.spines.top'] = False
 
 np.set_printoptions(precision=2)
 
-def trim_html_table(html_string, start=None, end=2):
+import re
+
+def trim_html_table(html_string, start=3, end=2):
   soup = BeautifulSoup(html_string, 'html.parser')
 
   # find the row containing "..."
@@ -85,6 +88,12 @@ def trim_html_table(html_string, start=None, end=2):
   # the modified html string
   modified_html = str(soup)
 
+  # Find the substring in the format "N rows x M columns" and convert it to "(N, M)"
+  regex = re.compile(r"\d+ rows × \d+ columns")
+  match = regex.search(modified_html)
+  if match:
+    modified_html = modified_html.replace(match.group(), "") # f"({match.group()})")
+
   return modified_html
 
 
@@ -95,6 +104,20 @@ def wrapped_html_repr(fn):
     return wrapped
 
 pd.DataFrame._repr_html_ = wrapped_html_repr(pd.DataFrame._repr_html_)
+
+# Create a `display_vector` function that calls `trim_html_table` on the output of `_repr_html_`
+# but also discards the first column of the generated table.
+def display_vector(x, start=None, end=2):
+    table = trim_html_table(x._repr_html_(), start=start, end=end)
+    
+    # Use BeautifulSoup to remove the first column of the table.
+    # That is, remove the first <th> inside <thead>, and every <th> inside <tbody>.
+    soup = BeautifulSoup(table, 'html.parser')
+    soup.find("thead").find("th").decompose()
+    for row in soup.find("tbody").find_all("th"):
+        row.decompose()
+    table = str(soup)
+    display(HTML(table))
 ```
 
 <!--
@@ -526,11 +549,6 @@ None
 
 ```{python}
 #| echo: false
-# point
-``` 
-
-```{python}
-#| echo: false
 # Calculate the distances to the point
 distances = np.linalg.norm(manifold - point, axis=1)
 distances = distances.round(2)
@@ -543,7 +561,7 @@ distances.columns.name = "\(i\)"
 
 ```{python}
 #| echo: false
-display(manifold) 
+display(manifold)
 ```
 
 :::
@@ -551,7 +569,7 @@ display(manifold)
 
 ```{python}
 #| echo: false
-display(targets) 
+display_vector(targets)
 ```
 
 :::
@@ -559,7 +577,7 @@ display(targets)
 
 ```{python}
 #| echo: false
-display(distances)
+display_vector(distances)
 ```
 
 :::
@@ -590,7 +608,7 @@ display(mani_sorted)
 
 ```{python}
 #| echo: false
-display(targets_sorted) 
+display_vector(targets_sorted) 
 ```
 
 :::
@@ -598,7 +616,7 @@ display(targets_sorted)
 
 ```{python}
 #| echo: false
-display(distances_sorted)
+display_vector(distances_sorted)
 ```
 
 :::
@@ -630,7 +648,7 @@ display(mani_knn)
 
 ```{python}
 #| echo: false
-display(targets_knn) 
+display_vector(targets_knn) 
 ```
 
 :::
@@ -638,7 +656,7 @@ display(targets_knn)
 
 ```{python}
 #| echo: false
-display(distances_knn)
+display_vector(distances_knn)
 ```
 
 :::
@@ -693,7 +711,7 @@ display(targets_knn)
 
 ```{python}
 #| echo: false
-display(distances_knn)
+display_vector(distances_knn)
 ```
 
 :::
@@ -701,7 +719,7 @@ display(distances_knn)
 
 ```{python}
 #| echo: false
-display(weights_knn) 
+display_vector(weights_knn) 
 ```
 
 :::
@@ -730,6 +748,246 @@ plt.xticks(range(len(ticks)), ticks)
 plt.ylabel("$x$")
 None
 ```
+
+# S-map Algorithm {data-background-image="unsw-yellow-shape.png" data-visibility="uncounted"}
+
+```{python}
+# # Create the embeddings
+# url = "https://github.com/EDM-Developers/fastEDM-r/raw/main/vignettes/chicago.csv"
+# chicago = pd.read_csv(url)
+
+# x = chicago["Temperature"].to_numpy(dtype=float)
+# x /= x.mean()
+```
+
+## New dataset
+
+```{python}
+df = pd.read_csv("lorenz-rho-50.csv")
+df.columns = ["\(x_t\)", "\(y_t\)", "\(z_t\)"]
+df.columns.name = "\(t\)"
+df = df.iloc[100:, :]
+
+x = df["\(x_t\)"].to_numpy(dtype=float)
+x = x.round(2)
+t = np.arange(len(x)).astype(float)
+
+```
+
+## Embedding
+
+```{python}
+M, y = fastEDM.create_manifold_and_targets(t, x, E=E, tau=20, p=10)
+# M = M[:, ::-1]  # reverse the order of the columns
+
+point = [-2.5, -6.0, -6.0]
+
+manifold = pd.DataFrame(M)
+manifold.columns = ["\(x_t\)"] + ["\(x_{{t-{}}}\)".format(i) for i in range(1, E)]
+manifold.columns.name = "\(i\)"
+
+targets = pd.DataFrame(y)
+targets.columns = ["\(x_{t+1}\)"]
+targets.columns.name = "\(i\)"
+```
+
+## Calculate the distances to the point
+
+```{python}
+#| echo: false
+distances = np.linalg.norm(manifold - point, axis=1)
+distances = pd.DataFrame({"\(d(\mathbf{x}_i, \mathbf{x}^*)\)": distances})
+distances.columns.name = "\(i\)"
+distances /= distances.mean()
+distances = distances.round(2)
+
+theta = 1.0
+weights = np.exp(-theta * distances)
+weights = weights.round(2)
+weights.columns = ["\(w_i\)"]
+weights.columns.name = "\(i\)"
+w = weights.to_numpy().flatten()
+
+# Add a column of ones to the left of the manifold matrix
+manifold_with_const = np.hstack([np.ones((manifold.shape[0], 1)), manifold.to_numpy()])
+
+A = w[:,None] * manifold_with_const
+B = (w * targets.to_numpy().flatten())
+C_t = np.linalg.lstsq(A, B, rcond=None)[0] 
+# smap_pred = np.dot(C_t.T, [1] + point)
+# point
+``` 
+
+::: columns
+::: {.column width=45%} 
+
+```{python}
+#| echo: false
+display(manifold) 
+```
+
+:::
+::: {.column width=25%} 
+
+```{python}
+#| echo: false
+display(targets) 
+```
+
+:::
+::: {.column width=30%}
+
+```{python}
+#| echo: false
+display(distances)
+```
+
+:::
+:::
+
+
+## Weights
+
+::: columns
+::: {.column width=50%} 
+
+```{python}
+#| echo: false
+display(manifold) 
+```
+
+:::
+::: {.column width=25%} 
+
+```{python}
+#| echo: false
+display(distances) 
+```
+
+:::
+::: {.column width=25%}
+
+```{python}
+#| echo: false
+display(weights)
+```
+
+:::
+:::
+
+## Look at the manifold
+
+```{python}
+#| echo: false
+for i in range(manifold.shape[0]-1): 
+  point_i = manifold.iloc[i, :].values
+  target_i = targets.iloc[i, 0] 
+  plt.plot(point_i, 'o-')
+  
+  # Plot another line from point_i[-1] to target_i using the same colour as the previous line
+  prev_col = plt.gca().lines[-1].get_color()
+  
+  xs = [len(point_i)-1, len(point_i)]
+  ys = [point_i[-1], target_i]
+
+  plt.plot(xs, ys, '--', color=prev_col, alpha=0.5)
+
+plt.axvline(len(point), ls="--", color=colors[1])
+None
+```
+
+## Plot those trajectories (weighted)
+
+```{python}
+#| echo: false
+for i in range(manifold.shape[0]):
+  weight_i = weights.iloc[i,0]
+  point_i = manifold.iloc[i, :].values
+  target_i = targets.iloc[i, 0] 
+  plt.plot(point_i, 'o-', alpha=weight_i)
+  
+  # Plot another line from point_i[-1] to target_i using the same colour as the previous line
+  prev_col = plt.gca().lines[-1].get_color()
+  
+  xs = [len(point_i)-1, len(point_i)]
+  ys = [point_i[-1], target_i]
+
+  plt.plot(xs, ys, '--', color=prev_col, alpha=0.75*weight_i)
+
+plt.axvline(len(point), ls="--", color=colors[1])
+None
+```
+
+## Scatter plots
+
+```{python}
+#| echo: false
+# Make a 1xE grid of scatterplots showing the relationship between the columns in the manifold
+# against the target variable.
+fig, axes = plt.subplots(1, E, figsize=(8, 3))
+
+limits = []
+
+for i, ax in enumerate(axes):
+  # Control size of ax.scatter points using the argument named "s"
+
+  ax.scatter(manifold.iloc[:, i], targets, s=0.5)
+  ax.set_xlabel(f"Lag {i+1}")
+
+  # Fit a straight line to manifold[:, i] and targets
+  slope, intercept, r_value, p_value, std_err = stats.linregress(manifold.iloc[:, i], targets.to_numpy().flatten())
+  xs = np.linspace(ax.get_xlim()[0], ax.get_xlim()[1], 100)
+  preds = slope * xs + intercept
+  ax.plot(xs, preds, color=colors[1])
+
+  # Save the xlim/ylim for each subplot
+  xlim = ax.get_xlim()
+  ylim = ax.get_ylim()
+  limits.append((xlim, ylim))
+
+axes[0].set_ylabel("Target")
+
+plt.tight_layout()
+None
+```
+
+
+## Scatter plots (weighted)
+
+```{python}
+#| echo: false
+# Make a 1xE grid of scatterplots showing the relationship between the columns in the manifold
+# against the target variable.
+fig, axes = plt.subplots(1, E, figsize=(8, 3))
+
+for i, ax in enumerate(axes):
+  ax.scatter(manifold.iloc[:, i], targets, alpha=weights, s=0.5)
+  ax.set_xlabel(f"Lag {i+1}")
+
+  C_t = np.linalg.lstsq(A, B, rcond=None)[0] 
+
+  ax.set_xlim(limits[i][0])
+  ax.set_ylim(limits[i][1])
+
+  xs = np.linspace(ax.get_xlim()[0], ax.get_xlim()[1], 100)
+  preds = np.zeros(len(xs))
+
+  for j, x in enumerate(xs):
+    avg_point = np.zeros(E+1)
+    avg_point[0] = 1.0
+    avg_point[1:] = manifold.mean(axis=0).values
+    avg_point[i+1] = x
+    preds[j] = np.dot(C_t.T, avg_point)
+
+  ax.plot(xs, preds, color=colors[1], ls="--", alpha=0.5)
+
+  # Reset the xlim/ylim
+  ax.set_xlim(limits[i][0])
+  ax.set_ylim(limits[i][1])
+  
+axes[0].set_ylabel("Target")
+
+plt.tight_layout()
 None
 ```
 

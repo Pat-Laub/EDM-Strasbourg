@@ -106,9 +106,9 @@ pre.numberSource code > span > a:first-child::before {
     border-bottom: 2px solid !important;
 }
 
-// Put a vertical line after the first column
-.reveal table th:first-child, .reveal table td:first-child {
-    border-right: 2px solid !important;
+// Put a vertical line to the left of the second column
+.reveal table th:nth-child(2), .reveal table td:nth-child(2) {
+    border-left: 2px solid !important;
 }
 
 // Center the table headers
