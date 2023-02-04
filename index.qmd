@@ -60,7 +60,7 @@ plt.rcParams['font.family'] = "serif"
 plt.rcParams['axes.spines.right'] = False
 plt.rcParams['axes.spines.top'] = False
 
-np.set_printoptions(precision=2)
+np.set_printoptions(precision=2, threshold=100)
 
 import re
 
@@ -1115,18 +1115,24 @@ wc -l Stata\ Paper/sj-edm/edm.tex edm-stata/stata/edm.sthlp edm-stata/docs/*.md 
 git rev-list --all --count
 -->
 
+## How to choose the hyperparameters?
+
 ## For-loop hell
 
 
 # Optimisation {data-background-image="unsw-yellow-shape.png" data-visibility="uncounted"}
 
+<br>
+
+> "Premature optimization is the root of all evil."
+Donald Knuth
+
 ##  {.smaller}
 
 <h2>Writing faster code</h2>
 
-> "Premature optimization is the root of all evil." Donald Knuth
 
-Stop and ask why
+
 
 $$
 \begin{aligned}
@@ -1141,31 +1147,25 @@ $$\text{Cost of programmer's time spent optimizing}
 $$
 
 
-## A typical computer
+## My computer
 
-<img style="" data-natural-width="717" data-natural-height="478" data-lazy-loaded="" data-src="https://s3.amazonaws.com/media-p.slid.es/uploads/782452/images/8159712/pasted-from-clipboard.png">
+![My work machine (for deep learning experiments).](deep-learning-pc.mov)
 
-<img data-natural-width="239" data-natural-height="206" style="" data-lazy-loaded="" data-src="https://s3.amazonaws.com/media-p.slid.es/uploads/782452/images/8159713/pasted-from-clipboard.png">
+## Speeds of computing
 
-##
-
-<img style="" data-natural-width="1806" data-natural-height="1350" data-lazy-loaded="" data-src="https://s3.amazonaws.com/media-p.slid.es/uploads/782452/images/8159740/pasted-from-clipboard.png">
+![CPU vs RAM speeds.](cpu-vs-ram-speed.png)
 
 ## A typical program
 
+## Cache system
 
+![Hierarchy of caches](caches.png)
 
-## {.smaller}
-
-<a href="http://cs.brown.edu/courses/csci1310/2020/assign/labs/lab4.html" target="_blank">http://cs.brown.edu/courses/csci1310/2020/assign/labs/lab4.html</a>
- 
-::: columns
-::: column
-
-<img style="" data-natural-width="975" data-natural-height="552" data-lazy-loaded="" data-src="https://s3.amazonaws.com/media-p.slid.es/uploads/782452/images/8164394/caches.png"><
-
+::: footer
+[http://cs.brown.edu/courses/csci1310/2020/assign/labs/lab4.html](http://cs.brown.edu/courses/csci1310/2020/assign/labs/lab4.html)
 :::
-::: column
+
+## Impact on matrix order
 
 ```{python}
 n = 10_000
@@ -1189,27 +1189,43 @@ for i in range(n):
 
 <!-- <img style="left: -118px; top: -206px; width: 775px; height: 1109px;" data-natural-width="943" data-natural-height="1350" data-crop-x="0.151934" data-crop-y="0.185328" data-crop-width="0.823204" data-crop-height="0.600386" data-lazy-loaded="" data-src="https://s3.amazonaws.com/media-p.slid.es/uploads/782452/images/8164432/0C1C971C-C1C1-4E17-BB3B-1E2C5CD21D35.png"> -->
 
-:::
-:::
 
 # Profiling the code {data-background-image="unsw-yellow-shape.png" data-visibility="uncounted"}
 
-(use _snakeviz_, _lineprofiler_)
+<br>
 
-## {.smaller auto-animate=true}
+>  "... one of the key things is always measure, never trust your instincts because no matter how many years you've been doing this, and I've been doing this for nearly three decades on and off, you're always wrong."
+Matt Godbolt
+
+## Random sums example
 
 ::: columns
 ::: column
-$\mathbf{X} = (X_t)_{t = 1, \dots, T}$
+$$U_n \sim \mathsf{Exp}(\mu)$$
 :::
 ::: column
-$X_t = \sum_{n=1}^{N_t} U_n$
+$$N_t \sim \mathsf{Poisson}(\lambda)$$
 :::
 :::
 
-```python
-from scipy import stats
+::: columns
+::: {.column width="33%"}
+$$X_t = \textstyle\sum_{n=1}^{N_t} U_n$$
+:::
+::: {.column width="33%"}
+$$\mathbf{X} = (X_t)_{t = 1, \dots, T}$$
+:::
+::: {.column width="33%"}
+$$\text{Need } R \approx 10^7$$
+:::
+:::
 
+```{python}
+#| echo: false
+rnd.seed(1)
+``` 
+
+```{python}
 def sample_geometric_exponential_sums(T, p, μ):
   result = []
   
@@ -1223,9 +1239,72 @@ def sample_geometric_exponential_sums(T, p, μ):
     result.append(X_t)
       
   return result
+
+sample_geometric_exponential_sums(1_000, 0.5, 20.0)
 ```
 
-Typically need to call this $10^7$ times
+
+
+## Line profiler
+
+![Line profiler](line-profiler.png)
+
+## "3D" profiler (snakeviz)
+
+![Snakeviz](snakeviz.png)
+
+## Timing 
+
+```{python}
+def sample_geometric_exponential_sums(T, p, μ):
+  result = []
+  
+  for t in range(T):
+    N_t = stats.geom(p).rvs()
+    X_t = 0.0
+    for n in range(N_t):
+      U_n = stats.expon(μ).rvs()
+      X_t += U_n
+    
+    result.append(X_t)
+      
+  return result
+
+rnd.seed(1)
+%time rvs = sample_geometric_exponential_sums(1_000, 0.5, 20.0)
+```
+
+## Timing 
+
+```{python}
+def sample_geometric_exponential_sums_fast(T, p, μ):
+  result = []
+  
+  for t in range(T):
+    N_t = stats.geom.rvs(p)
+    X_t = 0.0
+    for n in range(N_t):
+      U_n = stats.expon.rvs(μ)
+      X_t += U_n
+    
+    result.append(X_t)
+      
+  return result
+
+rnd.seed(1)
+%time rvs = sample_geometric_exponential_sums_fast(1_000, 0.5, 20.0)
+```
+
+. . .
+
+```{python}
+#| echo: false
+t1 = %timeit -n1 -r1 -q -o sample_geometric_exponential_sums(1_000, 0.5, 20.0)
+t2 = %timeit -n1 -r1 -q -o sample_geometric_exponential_sums_fast(1_000, 0.5, 20.0)
+print(f"Speedup: {t1.average / t2.average:.2f}x")
+```
+
+. . .
 
 ::: columns
 ::: column
@@ -1244,24 +1323,6 @@ N_t = stats.geom.rvs(p)
 :::
 :::
 
-. . .
-
-1.7 s vs 89 ms ... (19x speedup)
-
-##
-
-::: columns
-::: column
-
-<img style="" data-natural-width="1262" data-natural-height="1058" data-lazy-loaded="" data-src="https://s3.amazonaws.com/media-p.slid.es/uploads/782452/images/8168942/pasted-from-clipboard.png">
-
-:::
-::: column
-
-<img style="" data-natural-width="2247" data-natural-height="1193" data-lazy-loaded="" data-src="https://s3.amazonaws.com/media-p.slid.es/uploads/782452/images/8168943/pasted-from-clipboard.png">
-
-:::
-:::
 
 ##
 
@@ -1299,9 +1360,8 @@ $$ \sum_{n=0}^{\infty} \frac{f^{(n)}(a)}{n!} (x-a)^n $$
 - Replace slow interpreted loops with fast compiled code
 - Potentially can use a CPU's vectorised instructions (SIMD)
 - Better use of the CPU's cache
-    
 
-##
+## Unvectorised {auto-animate=true}
 
 ```python
 def sample_geometric_exponential_sums(T, p, μ):
@@ -1319,9 +1379,8 @@ def sample_geometric_exponential_sums(T, p, μ):
   return result
 ```
 
-Unvectorised
 
-## {auto-animate=true}
+## Vectorised {auto-animate=true}
     
 ```python
 def sample_geometric_exponential_sums(T, p, μ):
@@ -1334,11 +1393,9 @@ def sample_geometric_exponential_sums(T, p, μ):
   return X
 ```
 
-Vectorised (& most readable)
-
 5.5 ms to 5.48 ms (no change)
 
-## {auto-animate=true}
+## Preallocate random variables {auto-animate=true}
 
 ```python
 def sample_geometric_exponential_sums(T, p, μ):
@@ -1357,8 +1414,6 @@ def sample_geometric_exponential_sums(T, p, μ):
 
 5.5 ms to 2.7 ms (2x speedup)
     
-Allocate all random variables in one hit
-
 # Compiled code {data-background-image="unsw-yellow-shape.png" data-visibility="uncounted"}
 
 (use <em>numba</em>)
@@ -1390,12 +1445,7 @@ https://hacks.mozilla.org/2017/02/a-crash-course-in-just-in-time-jit-compilers/
 
 ## What does a machine understand? {.smaller}
 
-Intel i5 (2010): add (0101), subtract (1111), ...
 
-Intel i7 (2020): add (0101), subtract (1111), add_vectors (1011), ...
-
-Apple M1 (2020): add (100), &nbsp;<span style="color:rgb(51, 51, 51)">subtract (111), ...
-            
 $$
 \underbrace{\text{1100 0111}}_{\Large \text{function}}~\underbrace{\text{01000101 1111 1000 0101 1111 1000 0000}}_{\Large \text{arg1}}~\underbrace{\text{0001 0000 000 0000 0000 0000 0000 0000 0000 0000 0000}}_{\Large \text{arg2}}
 $$
@@ -1410,6 +1460,13 @@ int x = 1;
 ```
 
 Instruction set architecture (ISA), e.g. x86-64
+
+Intel i5 (2010): add (0101), subtract (1111), ...
+
+Intel i7 (2020): add (0101), subtract (1111), add_vectors (1011), ...
+
+Apple M1 (2020): add (100), &nbsp;<span style="color:rgb(51, 51, 51)">subtract (111), ...
+            
 
 Try Compiler Explorer <a href="https://godbolt.org/z/dTv78M" target="_blank">https://godbolt.org/z/dTv78M</a>
 
@@ -1670,7 +1727,6 @@ Hence with unlimited processor count
 $$ S(\infty) = 1 / (1-P) $$
 
 E.g. $P = 0.9$ then $S(\infty) = 10$.
-
 
 #
 
