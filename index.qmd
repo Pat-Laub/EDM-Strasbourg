@@ -21,6 +21,7 @@ format:
       boardmarker-width: 5
       grid: false
     include-before: <div class="line right"></div>
+    include-after: <script>registerRevealCallbacks();</script>
     # footer: Patrick Laub, Stochastic Calculus Seminar, Université de Strasbourg
 highlight-style: breeze
 jupyter: python3
@@ -1739,3 +1740,27 @@ E.g. $P = 0.9$ then $S(\infty) = 10$.
 <br>
 
 😍 If you're talented in causal inference or programming (Stata/Mata, R, Javascript, C++, Python), we'd love contributions! 
+
+
+<script defer>
+    // Remove the highlight.js class for the 'compile', 'min', 'max'
+    // as there's a bug where they are treated like the Python built-in
+    // global functions but we only ever see it as methods like
+    // 'model.compile()' or 'predictions.max()'
+    buggyBuiltIns = ["compile", "min", "max", "round", "sum"];
+
+    document.querySelectorAll('.bu').forEach((elem) => {
+        if (buggyBuiltIns.includes(elem.innerHTML)) {
+            elem.classList.remove('bu');
+        }
+    })
+
+    var registerRevealCallbacks = function() {
+        Reveal.on('overviewshown', event => {
+            document.querySelector(".line.right").hidden = true;
+        });
+        Reveal.on('overviewhidden', event => {
+            document.querySelector(".line.right").hidden = false;
+        });
+    };
+</script>
