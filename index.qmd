@@ -148,15 +148,15 @@ def display_vector(x, start=None, end=2):
 Cf. [https://pat-laub.github.io](https://pat-laub.github.io).
 :::
 
-## Photos & texts
+<!-- ## Photos & texts
 
-TODO
+TODO -->
 
 ## Plan
 
 1. Brief game about ABC
 2. 🪄Empirical Dynamic Modelling🪄
-3. Better performance in statistical computing
+3. A few slides on performant statistical computation
 
 # ABC {data-visibility="uncounted" background-image="unsw-yellow-shape.png"}
 
@@ -184,21 +184,6 @@ We flip a coin three times and get:
 :::
 
 What is $\theta = \mathbb{P}(\text{Heads})$?
-
-## Bayesian approach
-
-::: columns
-::: column
-![Prior](coin-prior.png)
-:::
-::: column
-
-<iframe width="560" height="280" src="https://www.youtube.com/embed/P6pugawb7SM" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-
-<iframe width="560" height="280" src="https://www.youtube.com/embed/tuXXubOkFuY" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-
-:::
-:::
 
 ## Let's flip coins
 
@@ -1185,6 +1170,7 @@ wc -l Stata\ Paper/sj-edm/edm.tex edm-stata/stata/edm.sthlp edm-stata/docs/*.md 
 git rev-list --all --count
 -->
 
+
 ## How to choose the hyperparameters?
 
 ## For-loop hell
@@ -1215,49 +1201,6 @@ $$
 $$\text{Cost of programmer's time spent optimizing}
             \ll \text{Cost of computer's time saved}
 $$
-
-
-## My computer
-
-![My work machine (for deep learning experiments).](deep-learning-pc.mov)
-
-## Speeds of computing
-
-![CPU vs RAM speeds.](cpu-vs-ram-speed.png)
-
-## A typical program
-
-## Cache system
-
-![Hierarchy of caches](caches.png)
-
-::: footer
-[http://cs.brown.edu/courses/csci1310/2020/assign/labs/lab4.html](http://cs.brown.edu/courses/csci1310/2020/assign/labs/lab4.html)
-:::
-
-## Impact on matrix order
-
-```{python}
-n = 10_000
-matrix = np.array(range(n*n)).reshape(n, n)
-```
-
-```{python}
-%%time
-col_sums = np.zeros(n)
-for j in range(n):
-  col_sums += matrix[:, j]
-```
-
-```{python}
-%%time
-row_sums = np.zeros(n)
-for i in range(n):
-  row_sums += matrix[i, :]
-```
-
-
-<!-- <img style="left: -118px; top: -206px; width: 775px; height: 1109px;" data-natural-width="943" data-natural-height="1350" data-crop-x="0.151934" data-crop-y="0.185328" data-crop-width="0.823204" data-crop-height="0.600386" data-lazy-loaded="" data-src="https://s3.amazonaws.com/media-p.slid.es/uploads/782452/images/8164432/0C1C971C-C1C1-4E17-BB3B-1E2C5CD21D35.png"> -->
 
 
 # Profiling the code {data-background-image="unsw-yellow-shape.png" data-visibility="uncounted"}
@@ -1308,7 +1251,7 @@ def sample_geometric_exponential_sums(T, p, μ):
     
     result.append(X_t)
       
-  return result
+  return np.array(result)
 
 sample_geometric_exponential_sums(1_000, 0.5, 20.0)
 ```
@@ -1393,7 +1336,7 @@ N_t = stats.geom.rvs(p)
 :::
 :::
 
-
+<!-- 
 ##
 
 ```python
@@ -1418,6 +1361,7 @@ def sample_geometric_exponential_sums(T, p, μ):
 Looking in the source, see that scipy just wraps numpy
 
 Down from 89 ms to 5.5 ms (another 16x speedup)
+-->
 
 <!--
 
@@ -1512,32 +1456,6 @@ https://hacks.mozilla.org/2017/02/a-crash-course-in-just-in-time-jit-compilers/
 
 <a href="https://xkcd.com/303/" target="_blank">xkcd</a>
 
-## What does a machine understand? {.smaller}
-
-
-$$
-\underbrace{\text{1100 0111}}_{\Large \text{function}}~\underbrace{\text{01000101 1111 1000 0101 1111 1000 0000}}_{\Large \text{arg1}}~\underbrace{\text{0001 0000 000 0000 0000 0000 0000 0000 0000 0000 0000}}_{\Large \text{arg2}}
-$$
-  
-
-```x86
-movl $0x1, -0x8(%rbp)
-```
-
-```cpp
-int x = 1;
-```
-
-Instruction set architecture (ISA), e.g. x86-64
-
-Intel i5 (2010): add (0101), subtract (1111), ...
-
-Intel i7 (2020): add (0101), subtract (1111), add_vectors (1011), ...
-
-Apple M1 (2020): add (100), &nbsp;<span style="color:rgb(51, 51, 51)">subtract (111), ...
-            
-
-Try Compiler Explorer <a href="https://godbolt.org/z/dTv78M" target="_blank">https://godbolt.org/z/dTv78M</a>
 
 ## Why is Python slow?
 
@@ -1634,6 +1552,112 @@ function arraySum(arr) {
 C.f. Lin Clark (2017), A crash course in JIT compilers
 
 https://hacks.mozilla.org/2017/02/a-crash-course-in-just-in-time-jit-compilers/
+
+
+## Theoretical limits
+
+**Amdahl’s Law** (or Law of Diminishing Returns)
+
+$P$ is the proportion of a program that can be made parallel
+$1 - P$ remains serial.
+    
+<u>Theoretical</u> maximum speedup of achieved by N processor is
+
+$$ S(N)=1/[(1-P)+P/N] $$
+
+Hence with unlimited processor count
+
+$$ S(\infty) = 1 / (1-P) $$
+
+E.g. $P = 0.9$ then $S(\infty) = 10$.
+
+#
+
+<h2>Get involved!</h2>
+
+<br>
+
+😊 Give it a try, feedback would be very welcome.
+
+<br>
+
+😍 If you're talented in causal inference or programming (Stata/Mata, R, Javascript, C++, Python), we'd love contributions! 
+
+
+# Appendix {data-visibility="uncounted" background-image="unsw-yellow-shape.png"}
+
+
+## My computer
+
+![My work machine (for deep learning experiments).](deep-learning-pc.mov)
+
+## Speeds of computing
+
+![CPU vs RAM speeds.](cpu-vs-ram-speed.png)
+
+## A typical program
+
+## Cache system
+
+![Hierarchy of caches](caches.png)
+
+::: footer
+[http://cs.brown.edu/courses/csci1310/2020/assign/labs/lab4.html](http://cs.brown.edu/courses/csci1310/2020/assign/labs/lab4.html)
+:::
+
+## Impact on matrix order
+
+```{python}
+n = 10_000
+matrix = np.array(range(n*n)).reshape(n, n)
+```
+
+```{python}
+%%time
+col_sums = np.zeros(n)
+for j in range(n):
+  col_sums += matrix[:, j]
+```
+
+```{python}
+%%time
+row_sums = np.zeros(n)
+for i in range(n):
+  row_sums += matrix[i, :]
+```
+
+
+<!-- <img style="left: -118px; top: -206px; width: 775px; height: 1109px;" data-natural-width="943" data-natural-height="1350" data-crop-x="0.151934" data-crop-y="0.185328" data-crop-width="0.823204" data-crop-height="0.600386" data-lazy-loaded="" data-src="https://s3.amazonaws.com/media-p.slid.es/uploads/782452/images/8164432/0C1C971C-C1C1-4E17-BB3B-1E2C5CD21D35.png"> -->
+
+# Compiled code {data-background-image="unsw-yellow-shape.png" data-visibility="uncounted"}
+
+## What does a machine understand? {.smaller}
+
+
+$$
+\underbrace{\text{1100 0111}}_{\Large \text{function}}~\underbrace{\text{01000101 1111 1000 0101 1111 1000 0000}}_{\Large \text{arg1}}~\underbrace{\text{0001 0000 000 0000 0000 0000 0000 0000 0000 0000 0000}}_{\Large \text{arg2}}
+$$
+  
+
+```x86
+movl $0x1, -0x8(%rbp)
+```
+
+```cpp
+int x = 1;
+```
+
+Instruction set architecture (ISA), e.g. x86-64
+
+Intel i5 (2010): add (0101), subtract (1111), ...
+
+Intel i7 (2020): add (0101), subtract (1111), add_vectors (1011), ...
+
+Apple M1 (2020): add (100), &nbsp;<span style="color:rgb(51, 51, 51)">subtract (111), ...
+            
+
+Try Compiler Explorer <a href="https://godbolt.org/z/dTv78M" target="_blank">https://godbolt.org/z/dTv78M</a>
+
 
 ## {auto-animate=true}
 
@@ -1780,34 +1804,22 @@ Baumann et al. (2019), A fork() in the road
 
 <img data-natural-width="1933" data-natural-height="1350" style="" data-lazy-loaded="" data-crop-x="0" data-crop-y="0" data-crop-width="1" data-crop-height="1" data-src="https://s3.amazonaws.com/media-p.slid.es/uploads/782452/images/8164372/05BCC1DF-A1BE-4589-BD78-E62AF165BB67.png">
 
-## Theoretical limits
 
-**Amdahl’s Law** (or Law of Diminishing Returns)
+## Bayesian approach
 
-$P$ is the proportion of a program that can be made parallel
-$1 - P$ remains serial.
-    
-<u>Theoretical</u> maximum speedup of achieved by N processor is
+::: columns
+::: column
+![Prior](coin-prior.png)
+:::
+::: column
 
-$$ S(N)=1/[(1-P)+P/N] $$
+<iframe width="560" height="280" src="https://www.youtube.com/embed/P6pugawb7SM" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
-Hence with unlimited processor count
+<iframe width="560" height="280" src="https://www.youtube.com/embed/tuXXubOkFuY" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
-$$ S(\infty) = 1 / (1-P) $$
+:::
+:::
 
-E.g. $P = 0.9$ then $S(\infty) = 10$.
-
-#
-
-<h2>Get involved!</h2>
-
-<br>
-
-😊 Give it a try, feedback would be very welcome.
-
-<br>
-
-😍 If you're talented in causal inference or programming (Stata/Mata, R, Javascript, C++, Python), we'd love contributions! 
 
 
 <script defer>
