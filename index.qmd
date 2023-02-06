@@ -399,7 +399,7 @@ $$\widehat{y}_s = w_1 y_3 + w_2 y_5 .$$
 _Sequential Locally Weighted Global Linear Maps (S-map)_
 
 Weight the points by distance
-$$ w_i = \exp\bigl\{ - \theta d(\mathbf{x}_{s}, \mathbf{x}_i) \bigr\} .$$
+$$ w_i = \exp\bigl\{ - \theta \, d(\mathbf{x}_{s}, \mathbf{x}_i) \bigr\} .$$
 
 Build a local linear system
 $$\widehat{y}_s = \mathbf{x}_s^\top \boldsymbol{\beta}_s  .$$
@@ -696,7 +696,7 @@ display_vector(distances_sorted)
 :::
 :::
 
-## Find the nearest neighbours
+## Find the nearest neighbours {data-visibility="uncounted"}
 
 
 ```{python}
@@ -773,7 +773,7 @@ weights_knn.columns.name = "\(i\)"
 
 ::: columns
 
-::: {.column width=33%} 
+::: {.column width=25%} 
 
 ```{python}
 #| echo: false
@@ -781,7 +781,7 @@ display(targets_knn)
 ```
 
 :::
-::: {.column width=33%}
+::: {.column width=25%}
 
 ```{python}
 #| echo: false
@@ -789,7 +789,18 @@ display_vector(distances_knn)
 ```
 
 :::
-::: {.column width=33%} 
+::: {.column width=25%}
+
+```{python}
+#| echo: false
+norm_distances_knn = distances_knn / distances_knn.iloc[0, 0]
+norm_distances_knn = norm_distances_knn.round(2)
+norm_distances_knn.columns = ["\(\tilde{d}(\mathbf{x}_i, \mathbf{x}^*)\)"]
+display_vector(norm_distances_knn)
+```
+
+:::
+::: {.column width=25%} 
 
 ```{python}
 #| echo: false
@@ -798,6 +809,14 @@ display_vector(weights_knn)
 
 :::
 :::
+
+<br>
+$$w_i = \frac{
+  \exp\bigl\{ -\theta \, \tilde{d}(\mathbf{x}_i, \mathbf{x}^*) \bigr\}
+  }{
+    \sum_{j=1}^k \exp\bigl\{ -\theta \, \tilde{d}(\mathbf{x}_j, \mathbf{x}^*) \bigr\}
+  }
+$$
 
 ## Plot those trajectories (weighted)
 
@@ -904,12 +923,14 @@ display(targets)
 ```{python}
 #| echo: false
 distances = np.linalg.norm(manifold - point, axis=1)
-distances = pd.DataFrame({"\(d(\mathbf{x}_i, \mathbf{x}^*)\)": distances}) ############ NORMALISED DISTANCES
+distances = pd.DataFrame({"\(d(\mathbf{x}_i, \mathbf{x}^*)\)": distances})
 distances.columns.name = "\(i\)"
-distances /= distances.mean()
+norm_distances = distances / distances.mean()
 distances = distances.round(2)
+norm_distances = norm_distances.round(2)
+norm_distances.columns = ["\(\hat{d}(\mathbf{x}_i, \mathbf{x}^*)\)"]
 
-weights = np.exp(-theta * distances)
+weights = np.exp(-theta * norm_distances)
 weights = weights.round(2)
 weights.columns = ["\(w_i\)"]
 weights.columns.name = "\(i\)"
@@ -932,7 +953,7 @@ display(manifold)
 ```
 
 :::
-::: {.column width=30%} 
+::: {.column width=20%} 
 
 ```{python}
 #| echo: false
@@ -940,7 +961,7 @@ display_vector(targets)
 ```
 
 :::
-::: {.column width=30%}
+::: {.column width=20%}
 
 ```{python}
 #| echo: false
@@ -948,9 +969,23 @@ display_vector(distances)
 ```
 
 :::
+::: {.column width=20%}
+
+```{python}
+#| echo: false
+display_vector(norm_distances)
+```
+
+:::
 :::
 
-## Weights
+The average of the distances is:
+```{python}
+#|echo: false
+np.round(np.mean(np.array(distances)), 2)
+```
+
+## Weights {data-visibility="uncounted"}
 
 ::: columns
 ::: {.column width=40%} 
@@ -978,6 +1013,8 @@ display_vector(weights)
 
 :::
 :::
+
+$$w_i = \exp\bigl\{ -\theta \, \hat{d}(\mathbf{x}_i, \mathbf{x}^*) \bigr\}$$
 
 ```{python}
 #| echo: false
