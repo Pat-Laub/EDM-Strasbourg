@@ -274,6 +274,14 @@ $$
 
 then $y \Rightarrow x$, both $x, z \Rightarrow y$, and both $x, y \Rightarrow z$.
 
+## Fish brains {.smaller}
+
+<center>
+<iframe width="800" height="500" src="https://www.youtube.com/embed/5HtXYKKRA8g?start=1339" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+</center>
+
+Gerald Pao (2021), "How to use Causality without Correlation to Download Brains into Computers", QMNET Seminar.
+
 
 ## Linear/nonlinear dynamical systems {data-visibility="uncounted"}
 
@@ -326,108 +334,6 @@ Takens' theorem to the rescue, though...
 ::: footer
 Source: Munch et al. (2020), Frequently asked questions about nonlinear dynamics and empirical dynamic modelling, ICES Journal of Marine Science.
 :::
-
-
-# Empirical Dynamic Modelling (EDM) {data-background-image="unsw-yellow-shape.png" data-visibility="uncounted"}
-
-## Create lagged embeddings
-
-<br>
-
-Given two time series, create $E$-length trajectories
-
-$$ \mathbf{x}_t = (\text{Temp}_t, \text{Temp}_{t-1}, \dots, \text{Temp}_{t-(E-1)}) \in \mathbb{R}^{E} $$
-
-and targets
-
-$$ y_t = \text{Crime}_{t} .$$
-
-::: {.callout-note}
-The $\mathbf{x}_t$'s are called _points_ (on the shadow manifold).
-:::
-
-<!-- 
-## Key idea {data-visibility="uncounted"}
-
-Use lags of the time series!
-
-Given $x_t$ time series, create $E$-length trajectories
-
-$$ \mathbf{x}_t = (x_t, x_{t-\tau}, x_{t-2\tau}, \dots, x_{t-(E-1)\tau}) \in \mathbb{R}^{E} , t=1,2,\dots$$
-
-and targets
-
-$$ y_t = (x_{t+p}) , t=1,2,\dots .$$
-
-Parametrised by $\tau, p \in \mathbb{N}$.
-
--->
-
-## Split the data
-
-- $\mathcal{L} = \{ (\mathbf{x}_1, y_1) , \dots , (\mathbf{x}_{n} , y_{n}) \}$
-is _library set_,
-- $\mathcal{P} = \{ (\mathbf{x}_{n+1}, y_{n+1}) , \dots , (\mathbf{x}_{T}, y_{T}) \}$
-is _prediction set_.
-
-<br>
-
-For point $\mathbf{x}_{s} \in \mathcal{P}$, pretend we don't know $y_s$ and try to predict it.
-
-$$ \forall \, \mathbf{x} \in \mathcal{L} \quad \text{ find } \quad d(\mathbf{x}_{s}, \mathbf{x}) $$
-
-This is computationally demanding.
-
-## Non-parametric prediction: simplex
-
-<br>
-
-For point $\mathbf{x}_{s} \in \mathcal{P}$, find $k$ nearest neighbours in $\mathcal{L}$.
-
-Say, e.g., $k=2$ and the neighbours are 
-
-$$\mathcal{NN}_k = \bigl( (\mathbf{x}_{3}, y_3), (\mathbf{x}_{5}, y_5) \bigr)$$
-
-The _simplex method_ predicts
-
-$$\widehat{y}_s = w_1 y_3 + w_2 y_5 .$$ 
-
-## Non-parametric prediction: S-map
-
-<br>
-
-_Sequential Locally Weighted Global Linear Maps (S-map)_
-
-Weight the points by distance
-$$ w_i = \exp\bigl\{ - \theta \, d(\mathbf{x}_{s}, \mathbf{x}_i) \bigr\} .$$
-
-Build a local linear system
-$$\widehat{y}_s = \mathbf{x}_s^\top \boldsymbol{\beta}_s  .$$
-
-For all $s \in \mathcal{P}$, compare $\widehat{y}_s$ to true $y_s$, and calculate $\rho$.
-
-## Convergent cross mapping
-
-<br>
-
-- If $\text{Temp}_t$ causes $\text{Crime}_t$, then information about $\text{Temp}_t$ is somehow embedded in $\text{Crime}_t$.
-
-- By observing $\text{Crime}_t$, we should be able to forecast $\text{Temp}_t$.
-
-- By observing more of $\text{Crime}_t$ (more "training data"), our forecasts of $\text{Temp}_t$ should be more accurate.
-
-<br>
-
-_Example_: [Chicago crime and temperature](https://edm-developers.github.io/fastEDM-r/articles/chicago.html).
-
-
-## Fish brains {.smaller}
-
-<center>
-<iframe width="800" height="500" src="https://www.youtube.com/embed/5HtXYKKRA8g?start=1339" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
-</center>
-
-Gerald Pao (2021), "How to use Causality without Correlation to Download Brains into Computers", QMNET Seminar.
 
 # Simplex Algorithm {data-background-image="unsw-yellow-shape.png" data-visibility="uncounted"}
 
@@ -844,6 +750,13 @@ None
 
 # S-map Algorithm {data-background-image="unsw-yellow-shape.png" data-visibility="uncounted"}
 
+<br>
+<center>
+
+_Sequential Locally Weighted Global Linear Maps_
+
+</center>
+
 ## Lorenz system 
 
 Given $x_t$ from the Lorenz system:
@@ -1161,6 +1074,98 @@ axes[0].set_ylabel("Target")
 plt.tight_layout()
 None
 ```
+
+# Empirical Dynamic Modelling (EDM) {data-background-image="unsw-yellow-shape.png" data-visibility="uncounted"}
+
+## Create lagged embeddings
+
+<br>
+
+Given two time series, create $E$-length trajectories
+
+$$ \mathbf{x}_t = (\text{Temp}_t, \text{Temp}_{t-1}, \dots, \text{Temp}_{t-(E-1)}) \in \mathbb{R}^{E} $$
+
+and targets
+
+$$ y_t = \text{Crime}_{t} .$$
+
+::: {.callout-note}
+The $\mathbf{x}_t$'s are called _points_ (on the shadow manifold).
+:::
+
+<!-- 
+## Key idea {data-visibility="uncounted"}
+
+Use lags of the time series!
+
+Given $x_t$ time series, create $E$-length trajectories
+
+$$ \mathbf{x}_t = (x_t, x_{t-\tau}, x_{t-2\tau}, \dots, x_{t-(E-1)\tau}) \in \mathbb{R}^{E} , t=1,2,\dots$$
+
+and targets
+
+$$ y_t = (x_{t+p}) , t=1,2,\dots .$$
+
+Parametrised by $\tau, p \in \mathbb{N}$.
+
+-->
+
+## Split the data
+
+- $\mathcal{L} = \{ (\mathbf{x}_1, y_1) , \dots , (\mathbf{x}_{n} , y_{n}) \}$
+is _library set_,
+- $\mathcal{P} = \{ (\mathbf{x}_{n+1}, y_{n+1}) , \dots , (\mathbf{x}_{T}, y_{T}) \}$
+is _prediction set_.
+
+<br>
+
+For point $\mathbf{x}_{s} \in \mathcal{P}$, pretend we don't know $y_s$ and try to predict it.
+
+$$ \forall \, \mathbf{x} \in \mathcal{L} \quad \text{ find } \quad d(\mathbf{x}_{s}, \mathbf{x}) $$
+
+This is computationally demanding.
+
+## Non-parametric prediction: simplex
+
+<br>
+
+For point $\mathbf{x}_{s} \in \mathcal{P}$, find $k$ nearest neighbours in $\mathcal{L}$.
+
+Say, e.g., $k=2$ and the neighbours are 
+
+$$\mathcal{NN}_k = \bigl( (\mathbf{x}_{3}, y_3), (\mathbf{x}_{5}, y_5) \bigr)$$
+
+The _simplex method_ predicts
+
+$$\widehat{y}_s = w_1 y_3 + w_2 y_5 .$$ 
+
+## Non-parametric prediction: S-map
+
+<br>
+
+_Sequential Locally Weighted Global Linear Maps (S-map)_
+
+Weight the points by distance
+$$ w_i = \exp\bigl\{ - \theta \, d(\mathbf{x}_{s}, \mathbf{x}_i) \bigr\} .$$
+
+Build a local linear system
+$$\widehat{y}_s = \mathbf{x}_s^\top \boldsymbol{\beta}_s  .$$
+
+For all $s \in \mathcal{P}$, compare $\widehat{y}_s$ to true $y_s$, and calculate $\rho$.
+
+## Convergent cross mapping
+
+<br>
+
+- If $\text{Temp}_t$ causes $\text{Crime}_t$, then information about $\text{Temp}_t$ is somehow embedded in $\text{Crime}_t$.
+
+- By observing $\text{Crime}_t$, we should be able to forecast $\text{Temp}_t$.
+
+- By observing more of $\text{Crime}_t$ (more "training data"), our forecasts of $\text{Temp}_t$ should be more accurate.
+
+<br>
+
+_Example_: [Chicago crime and temperature](https://edm-developers.github.io/fastEDM-r/articles/chicago.html).
 
 
 # Software {data-background-image="unsw-yellow-shape.png" data-visibility="uncounted"}
