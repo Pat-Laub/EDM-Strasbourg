@@ -22,6 +22,7 @@ format:
       grid: false
     include-before: <div class="line right"></div>
     include-after: <script>registerRevealCallbacks();</script>
+    code-line-numbers: false
     # footer: Patrick Laub, Stochastic Calculus Seminar, Université de Strasbourg
 highlight-style: breeze
 jupyter: python3
@@ -253,8 +254,6 @@ Discovery Project DP200100219 and Future Fellowship FT140100629.
 :::
 
 ## Mirage correlation
-
-
 
 ## A different view of causality
 
@@ -1218,19 +1217,10 @@ git rev-list --all --count
 ## For-loop hell
 
 
-# Optimisation {data-background-image="unsw-yellow-shape.png" data-visibility="uncounted"}
-
-<br>
-
-> "Premature optimization is the root of all evil."
-Donald Knuth
-
+<!--
 ##  {.smaller}
 
 <h2>Writing faster code</h2>
-
-
-
 
 $$
 \begin{aligned}
@@ -1243,11 +1233,12 @@ $$
 $$\text{Cost of programmer's time spent optimizing}
             \ll \text{Cost of computer's time saved}
 $$
+-->
 
+# Profiling {data-background-image="unsw-yellow-shape.png" data-visibility="uncounted"}
 
-# Profiling the code {data-background-image="unsw-yellow-shape.png" data-visibility="uncounted"}
-
-<br>
+> "Premature optimization is the root of all evil."
+Donald Knuth
 
 >  "... one of the key things is always measure, never trust your instincts because no matter how many years you've been doing this, and I've been doing this for nearly three decades on and off, you're always wrong."
 Matt Godbolt
@@ -1332,7 +1323,7 @@ rnd.seed(1)
 ## Timing 
 
 ```{python}
-def sample_geometric_exponential_sums_fast(T, p, μ):
+def sample_geometric_exponential_sums_alternative(T, p, μ):
   result = []
   
   for t in range(T):
@@ -1347,7 +1338,7 @@ def sample_geometric_exponential_sums_fast(T, p, μ):
   return result
 
 rnd.seed(1)
-%time rvs = sample_geometric_exponential_sums_fast(1_000, 0.5, 20.0)
+%time rvs = sample_geometric_exponential_sums_alternative(1_000, 0.5, 20.0)
 ```
 
 . . .
@@ -1355,7 +1346,7 @@ rnd.seed(1)
 ```{python}
 #| echo: false
 t1 = %timeit -n1 -r1 -q -o sample_geometric_exponential_sums(1_000, 0.5, 20.0)
-t2 = %timeit -n1 -r1 -q -o sample_geometric_exponential_sums_fast(1_000, 0.5, 20.0)
+t2 = %timeit -n1 -r1 -q -o sample_geometric_exponential_sums_alternative(1_000, 0.5, 20.0)
 print(f"Speedup: {t1.average / t2.average:.2f}x")
 ```
 
@@ -1475,30 +1466,29 @@ def sample_geometric_exponential_sums(T, p, μ):
 
 ## Talking to a computer
 
-<img data-natural-width="2359" data-natural-height="1350" style="" data-lazy-loaded="" data-src="https://s3.amazonaws.com/media-p.slid.es/uploads/782452/images/8163861/lin-clark-arrival.png">
+![Arrival](lin-clark-arrival.png)
 
-C.f. Lin Clark (2017), A crash course in JIT compilers
-
-https://hacks.mozilla.org/2017/02/a-crash-course-in-just-in-time-jit-compilers/
-
+::: footer
+Source: Lin Clark (2017), [A crash course in JIT compilers](https://hacks.mozilla.org/2017/02/a-crash-course-in-just-in-time-jit-compilers/), Mozilla blog.
+:::
 
 ## Interpreters & compilers
 
+::: {.r-stack}
+![](lin-clark-interpreter.png)
 
-C.f. Lin Clark (2017), A crash course in JIT compilers
+![](lin-clark-compiler.png){.fragment}
+:::
 
-https://hacks.mozilla.org/2017/02/a-crash-course-in-just-in-time-jit-compilers/
+::: footer
+Source: Lin Clark (2017), [A crash course in JIT compilers](https://hacks.mozilla.org/2017/02/a-crash-course-in-just-in-time-jit-compilers/), Mozilla blog.
+:::
 
+<!-- <img style="" data-natural-width="413" data-natural-height="360" data-lazy-loaded="" data-src="https://s3.amazonaws.com/media-p.slid.es/uploads/782452/images/8159839/xkcd-compiling.png"> -->
 
-<img data-natural-width="2272" data-natural-height="1350" style="left: -84px; top: 0px; width: 650px; height: 386px;" data-crop-x="0.130014" data-crop-y="0" data-crop-width="0.672199" data-crop-height="1" data-lazy-loaded="" data-src="https://s3.amazonaws.com/media-p.slid.es/uploads/782452/images/8159824/lin-clark-compiler.png">
+<!-- <a href="https://xkcd.com/303/" target="_blank">xkcd</a> -->
 
-<img style="left: -93px; top: 0px; width: 663px; height: 386px;" data-natural-width="2318" data-natural-height="1350" data-crop-x="0.139918" data-crop-y="0" data-crop-width="0.744856" data-crop-height="1" data-lazy-loaded="" data-src="https://s3.amazonaws.com/media-p.slid.es/uploads/782452/images/8159825/lin-clark-interpreter.png">
-
-<img style="" data-natural-width="413" data-natural-height="360" data-lazy-loaded="" data-src="https://s3.amazonaws.com/media-p.slid.es/uploads/782452/images/8159839/xkcd-compiling.png">
-
-<a href="https://xkcd.com/303/" target="_blank">xkcd</a>
-
-
+<!-- 
 ## Why is Python slow?
 
 ::: columns
@@ -1532,16 +1522,17 @@ std::string z2 = x2 + y2;
 
 <img style="" data-natural-width="2346" data-natural-height="922" data-lazy-loaded="" data-src="https://s3.amazonaws.com/media-p.slid.es/uploads/782452/images/8161425/pasted-from-clipboard.png">
 
-Try Compiler Explorer <a href="https://godbolt.org/z/dTv78M" target="_blank">https://godbolt.org/z/dTv78M</a>
+Try Compiler Explorer
+<a href="https://godbolt.org/z/dTv78M" target="_blank">https://godbolt.org/z/dTv78M</a>
 
 ```c
 // x = 1
-if (PyDict_SetItem(__pyx_d, __pyx_n_s_x, __pyx_int_1) &lt; 0) {
+if (PyDict_SetItem(__pyx_d, __pyx_n_s_x, __pyx_int_1) < 0) {
 __PYX_ERR(0, 2, __pyx_L1_error);
 }
 
 // y = 2
-if (PyDict_SetItem(__pyx_d, __pyx_n_s_y, __pyx_int_2) &lt; 0) {
+if (PyDict_SetItem(__pyx_d, __pyx_n_s_y, __pyx_int_2) < 0) {
 __PYX_ERR(0, 3, __pyx_L1_error);
 }
 
@@ -1565,7 +1556,7 @@ __Pyx_DECREF(__pyx_t_1);
 __pyx_t_1 = 0;
 __Pyx_DECREF(__pyx_t_2);
 __pyx_t_2 = 0;
-if (PyDict_SetItem(__pyx_d, __pyx_n_s_z, __pyx_t_3) &lt; 0) {
+if (PyDict_SetItem(__pyx_d, __pyx_n_s_z, __pyx_t_3) < 0) {
 __PYX_ERR(0, 4, __pyx_L1_error);
 }
 __Pyx_DECREF(__pyx_t_3);
@@ -1575,25 +1566,41 @@ __pyx_t_3 = 0;
 Python
 
 C++
+-->
 
+## Type checking
 
-##
+::: columns
+::: {.column width="40%"}
+
+<br>
+<br>
 
 ```R
 function arraySum(arr) {
   sum = 0
   for (i in 1:length(arr)) {
-    sum += arr[i]
+    sum = sum + arr[i]
   }
   return(sum)
 }
 ```
 
-<img style="left: -180px; top: 0px; width: 802px; height: 518px;" data-natural-width="2090" data-natural-height="1350" data-crop-x="0.224439" data-crop-y="0" data-crop-width="0.775561" data-crop-height="1" data-lazy-loaded="" data-src="https://s3.amazonaws.com/media-p.slid.es/uploads/782452/images/8159836/lin-clark-type-checking.png">
+:::
+::: {.column width="60%"}
 
-C.f. Lin Clark (2017), A crash course in JIT compilers
+![Type checking](lin-clark-type-checking.png)
 
-https://hacks.mozilla.org/2017/02/a-crash-course-in-just-in-time-jit-compilers/
+:::
+:::
+
+::: {.smaller}
+Compiler Explorer: <a href="https://godbolt.org/z/dTv78M" target="_blank">https://godbolt.org/z/dTv78M</a>
+:::
+
+::: footer
+Source: Lin Clark (2017), [A crash course in JIT compilers](https://hacks.mozilla.org/2017/02/a-crash-course-in-just-in-time-jit-compilers/), Mozilla blog.
+:::
 
 
 ## Theoretical limits
