@@ -2,7 +2,7 @@
 title: Empirical Dynamic Modelling
 subtitle: Automatic Causal Inference and Forecasting
 institute: UNSW Sydney, School of Risk and Actuarial Studies
-author: Dr Patrick Laub
+author: Patrick Laub
 date: 7 February 2023
 date-format: long
 format:
@@ -124,7 +124,8 @@ def display_vector(x, start=None, end=2):
 
 # 
 
-<h2>About me</h2>
+<h2>About Me & Outline</h2>
+
 
 ::: columns
 ::: {.column width="65%"}
@@ -140,28 +141,25 @@ def display_vector(x, start=None, end=2):
 :::
 ::: {.column width="35%"}
 
-![](hawkes-book-cover.jpeg)
+<br>
+
+1. Brief ABC game
+2. Empirical Dynamic Modelling
+3. [Time permitting] Performant code
 
 :::
 :::
+
+<br>
+<br>
 
 ::: footer
 Cf. [https://pat-laub.github.io](https://pat-laub.github.io).
 :::
 
-<!-- ## Photos & texts
-
-TODO -->
-
-## Plan
-
-1. Brief game about ABC
-2. 🪄Empirical Dynamic Modelling🪄
-3. A few slides on performant statistical computation
-
 # ABC {data-visibility="uncounted" background-image="unsw-yellow-shape.png"}
 
-![Our IME paper](abc-abstract.png)
+![Our IME paper](abc-title.png)
 
 ## What is the bias?
 
@@ -255,6 +253,16 @@ Discovery Project DP200100219 and Future Fellowship FT140100629.
 
 ## Mirage correlation
 
+::: {.r-stack}
+![](mirage-correlations.png)
+
+![](mirage-correlations-sugihara-2012-figure-1.png){.fragment}
+:::
+
+::: footer
+Source: Sugihara et al. (2012), Detecting causality in complex ecosystems.
+:::
+
 ## A different view of causality
 
 <br>
@@ -312,7 +320,7 @@ We don't fit a model for $f$, non-parametrically use the data.
 Hence the name _empirical_ dynamic modelling. 
 :::
 
-## Noise or unobserved variables? {data-visibility="uncounted"}
+## Unobserved variables {data-visibility="uncounted"}
 
 Takens' theorem to the rescue, though...
 
@@ -785,11 +793,13 @@ predict $x_{t+10}$ given $(x_t, x_{t-20})$.
 #| echo: false
 E = 2
 theta = 5.0
+tau = 20
+p = 10
 
 T = int(np.round(len(t) * 0.9))
-M, y = fastEDM.create_manifold_and_targets(t[:T], x[:T], E=E, tau=20, p=10)
+M, y = fastEDM.create_manifold_and_targets(t[:T], x[:T], E=E, tau=tau, p=p)
 
-M_pred, y_pred = fastEDM.create_manifold_and_targets(t[T:], x[T:], E=E, tau=20, p=10)
+M_pred, y_pred = fastEDM.create_manifold_and_targets(t[T:], x[T:], E=E, tau=tau, p=p)
 point = M_pred[-1,:].copy()
 true_target = y_pred[-1,0]
 
@@ -953,7 +963,10 @@ fig, axes = plt.subplots(1, E, figsize=(8, 3))
 
 for i, ax in enumerate(axes):
   ax.scatter(manifold.iloc[:, i], targets, s=0.5)
-  ax.set_xlabel(f"Lag {i+1}")
+
+  ax.set_xlabel("$x_{t}$")
+  if i > 0:
+    ax.set_xlabel(f"$x_{{t-{tau*i}}}$")
 
   xs = np.linspace(ax.get_xlim()[0], ax.get_xlim()[1], 100)
   preds = np.zeros(len(xs))
@@ -968,7 +981,7 @@ for i, ax in enumerate(axes):
 
   ax.scatter([point[i]], [true_target], marker="x")
 
-axes[0].set_ylabel("Target")
+axes[0].set_ylabel(f"$x_{{t+{p}}}$")
 
 plt.tight_layout()
 None
@@ -1053,7 +1066,9 @@ fig, axes = plt.subplots(1, E, figsize=(8, 3))
 
 for i, ax in enumerate(axes):
   ax.scatter(manifold.iloc[:, i], targets, alpha=weights, s=0.5)
-  ax.set_xlabel(f"Lag {i+1}")
+  ax.set_xlabel("$x_{t}$")
+  if i > 0:
+    ax.set_xlabel(f"$x_{{t-{tau*i}}}$")
 
   xs = np.linspace(ax.get_xlim()[0], ax.get_xlim()[1], 100)
   preds = np.zeros(len(xs))
@@ -1068,7 +1083,7 @@ for i, ax in enumerate(axes):
 
   ax.scatter([point[i]], [true_target], marker="x")
   
-axes[0].set_ylabel("Target")
+axes[0].set_ylabel(f"$x_{{t+{p}}}$")
 
 plt.tight_layout()
 None
@@ -1124,6 +1139,8 @@ $$ \forall \, \mathbf{x} \in \mathcal{L} \quad \text{ find } \quad d(\mathbf{x}_
 
 This is computationally demanding.
 
+<!--
+
 ## Non-parametric prediction: simplex
 
 <br>
@@ -1151,6 +1168,8 @@ Build a local linear system
 $$\widehat{y}_s = \mathbf{x}_s^\top \boldsymbol{\beta}_s  .$$
 
 For all $s \in \mathcal{P}$, compare $\widehat{y}_s$ to true $y_s$, and calculate $\rho$.
+
+-->
 
 ## Convergent cross mapping
 
@@ -1211,11 +1230,11 @@ wc -l Stata\ Paper/sj-edm/edm.tex edm-stata/stata/edm.sthlp edm-stata/docs/*.md 
 git rev-list --all --count
 -->
 
-
+<!--
 ## How to choose the hyperparameters?
 
 ## For-loop hell
-
+-->
 
 <!--
 ##  {.smaller}
@@ -1586,16 +1605,18 @@ function arraySum(arr) {
 }
 ```
 
+<br>
+
+::: {.smaller}
+Compiler Explorer: <a href="https://godbolt.org/z/dTv78M" target="_blank">https://godbolt.org/z/dTv78M</a>
+:::
+
 :::
 ::: {.column width="60%"}
 
 ![Type checking](lin-clark-type-checking.png)
 
 :::
-:::
-
-::: {.smaller}
-Compiler Explorer: <a href="https://godbolt.org/z/dTv78M" target="_blank">https://godbolt.org/z/dTv78M</a>
 :::
 
 ::: footer
@@ -1636,17 +1657,17 @@ E.g. $P = 0.9$ then $S(\infty) = 10$.
 # Appendix {data-visibility="uncounted" background-image="unsw-yellow-shape.png"}
 
 
-## My computer
+## My computer {data-visibility="uncounted"}
 
 ![My work machine (for deep learning experiments).](deep-learning-pc.mov)
 
-## Speeds of computing
+## Speeds of computing {data-visibility="uncounted"}
 
 ![CPU vs RAM speeds.](cpu-vs-ram-speed.png)
 
-## A typical program
+<!-- ## A typical program -->
 
-## Cache system
+## Cache system {data-visibility="uncounted"}
 
 ![Hierarchy of caches](caches.png)
 
@@ -1654,7 +1675,7 @@ E.g. $P = 0.9$ then $S(\infty) = 10$.
 [http://cs.brown.edu/courses/csci1310/2020/assign/labs/lab4.html](http://cs.brown.edu/courses/csci1310/2020/assign/labs/lab4.html)
 :::
 
-## Impact on matrix order
+## Impact on matrix order {data-visibility="uncounted"}
 
 ```{python}
 n = 10_000
@@ -1680,7 +1701,7 @@ for i in range(n):
 
 # Compiled code {data-background-image="unsw-yellow-shape.png" data-visibility="uncounted"}
 
-## What does a machine understand? {.smaller}
+## What does a machine understand? {.smaller data-visibility="uncounted"}
 
 
 $$
@@ -1708,7 +1729,7 @@ Apple M1 (2020): add (100), &nbsp;<span style="color:rgb(51, 51, 51)">subtract (
 Try Compiler Explorer <a href="https://godbolt.org/z/dTv78M" target="_blank">https://godbolt.org/z/dTv78M</a>
 
 
-## {auto-animate=true}
+## {auto-animate=true data-visibility="uncounted"}
 
 ```python
 def sample_geometric_exponential_sums(T, p, μ):
@@ -1727,7 +1748,7 @@ def sample_geometric_exponential_sums(T, p, μ):
 
 Interpreted version
 
-## {auto-animate=true}
+## {auto-animate=true data-visibility="uncounted"}
 
 ```python
 cpdef sample_geometric_exponential_sums(long T, double p, double mu):
@@ -1745,7 +1766,7 @@ cpdef sample_geometric_exponential_sums(long T, double p, double mu):
 
 Compiled by <em>Cython</em> (not recommended)
 
-## {auto-animate=true}
+## {auto-animate=true data-visibility="uncounted"}
     
 ```python
 def sample_geometric_exponential_sums(T, p, μ):
@@ -1764,7 +1785,7 @@ def sample_geometric_exponential_sums(T, p, μ):
 
 Interpreted version
 
-## {auto-animate=true}
+## {auto-animate=true data-visibility="uncounted"}
 
 ```python
 from numba import njit
@@ -1789,7 +1810,7 @@ down from 2.7 ms to 164 μs (16x speedup)
 
 Compiled by <em>numba</em>
 
-##
+## {data-visibility="uncounted"}
 
 Original code: 1.7 s
 
@@ -1824,7 +1845,7 @@ In python, use <em>joblib</em>. E.g. to calculate
 $$ \sum_{i=0}^{n} f(i) $$
 -->
 
-## Threads or processes? {.smaller}
+## Threads or processes? {.smaller data-visibility="uncounted"}
 
 Use multiple <u>processes</u> in Python,
 probably should use multiple threads elsewhere.
@@ -1845,16 +1866,16 @@ probably should use multiple threads elsewhere.
 Baumann et al. (2019), A fork() in the road
 17th Workshop on Hot Topics in Operating Systems
     
-##
+## {data-visibility="uncounted"}
 
 <img data-natural-width="1933" data-natural-height="1350" style="" data-lazy-loaded="" data-src="https://s3.amazonaws.com/media-p.slid.es/uploads/782452/images/8164371/CDB86CFB-AAC5-434D-9FCE-05A8ACD84FDF.png">
 
-##
+## {data-visibility="uncounted"}
 
 <img data-natural-width="1933" data-natural-height="1350" style="" data-lazy-loaded="" data-crop-x="0" data-crop-y="0" data-crop-width="1" data-crop-height="1" data-src="https://s3.amazonaws.com/media-p.slid.es/uploads/782452/images/8164372/05BCC1DF-A1BE-4589-BD78-E62AF165BB67.png">
 
 
-## Bayesian approach
+## Bayesian approach {data-visibility="uncounted"}
 
 ::: columns
 ::: column
