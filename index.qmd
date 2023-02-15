@@ -23,7 +23,7 @@ format:
     include-before: <div class="line right"></div>
     include-after: <script>registerRevealCallbacks();</script>
     code-line-numbers: false
-    # footer: Patrick Laub, Stochastic Calculus Seminar, Université de Strasbourg
+    footer: Patrick Laub, Probability Group Seminar, Université de Strasbourg
 highlight-style: breeze
 jupyter: python3
 execute:
