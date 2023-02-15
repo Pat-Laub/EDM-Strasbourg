@@ -196,6 +196,9 @@ What is $\theta = \mathbb{P}(\text{Heads})$?
 
 {{< include _coin-flip-animations.qmd >}}
 
+<!-- For exporting to PDF, the animations don't look good, so use the following static/image version: -->
+<!-- {{< include _coin-flip-animations-backup.qmd >}} -->
+
 # Causal Inference Introduction {data-background-image="unsw-yellow-shape.png" data-visibility="uncounted"}
 
 ## Goal: automatic causal inference

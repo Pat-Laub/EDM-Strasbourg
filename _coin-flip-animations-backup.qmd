@@ -1,0 +1,16 @@
+
+## $\theta$-biased coin gives $(\text{H, T, H})$
+
+![](exact-matching.png)
+
+## Getting an exact match is hard...
+
+![](eight-flips.png)
+                       
+## Accept close enough
+
+![](close-enough.png)
+
+## The 'approximate' part of ABC
+
+![](approximate-part.png)
